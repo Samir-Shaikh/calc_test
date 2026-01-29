@@ -33,6 +33,14 @@ class ExpressionDisplayState {
   /// message explaining why the evaluation failed.
   final String? evaluationError;
 
+  /// Whether to show an error toast notification.
+  /// 
+  /// This flag is set to true when an evaluation error occurs and should
+  /// trigger a toast display. Once the toast is displayed, the UI should
+  /// dispatch an [ErrorAcknowledged] event to reset this flag to false,
+  /// preventing repeated toast displays on subsequent state emissions.
+  final bool showError;
+
   const ExpressionDisplayState({
     required this.expression,
     this.result,
@@ -40,6 +48,7 @@ class ExpressionDisplayState {
     this.errorMessage,
     this.isEvaluationError = false,
     this.evaluationError,
+    this.showError = false,
   });
 
   /// Creates the initial state with an empty expression.
@@ -62,6 +71,7 @@ class ExpressionDisplayState {
     String? errorMessage,
     bool? isEvaluationError,
     String? evaluationError,
+    bool? showError,
     bool clearResult = false,
     bool clearErrorMessage = false,
     bool clearEvaluationError = false,
@@ -73,6 +83,7 @@ class ExpressionDisplayState {
       errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
       isEvaluationError: isEvaluationError ?? this.isEvaluationError,
       evaluationError: clearEvaluationError ? null : (evaluationError ?? this.evaluationError),
+      showError: showError ?? this.showError,
     );
   }
 
@@ -88,7 +99,8 @@ class ExpressionDisplayState {
         other.hasError == hasError &&
         other.errorMessage == errorMessage &&
         other.isEvaluationError == isEvaluationError &&
-        other.evaluationError == evaluationError;
+        other.evaluationError == evaluationError &&
+        other.showError == showError;
   }
 
   @override
@@ -98,9 +110,10 @@ class ExpressionDisplayState {
       hasError.hashCode ^
       errorMessage.hashCode ^
       isEvaluationError.hashCode ^
-      evaluationError.hashCode;
+      evaluationError.hashCode ^
+      showError.hashCode;
 
   @override
   String toString() =>
-      'ExpressionDisplayState(expression: $expression, result: $result, hasError: $hasError, errorMessage: $errorMessage, isEvaluationError: $isEvaluationError, evaluationError: $evaluationError)';
+      'ExpressionDisplayState(expression: $expression, result: $result, hasError: $hasError, errorMessage: $errorMessage, isEvaluationError: $isEvaluationError, evaluationError: $evaluationError, showError: $showError)';
 }

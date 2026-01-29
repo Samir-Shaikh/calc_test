@@ -126,3 +126,15 @@ class NegatePressed extends ExpressionDisplayEvent {
   @override
   String toString() => 'NegatePressed()';
 }
+
+/// Event triggered when an error toast has been displayed and acknowledged.
+///
+/// This event resets the [showError] flag to false after the toast is displayed,
+/// preventing repeated toast displays on subsequent state emissions.
+/// The UI should dispatch this event after showing the error toast.
+class ErrorAcknowledged extends ExpressionDisplayEvent {
+  const ErrorAcknowledged();
+
+  @override
+  String toString() => 'ErrorAcknowledged()';
+}

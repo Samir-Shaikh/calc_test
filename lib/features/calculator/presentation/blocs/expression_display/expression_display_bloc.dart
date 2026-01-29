@@ -66,6 +66,7 @@ class ExpressionDisplayBloc
     on<BackspacePressed>(_onBackspacePressed);
     on<EqualsPressed>(_onEqualsPressed);
     on<NegatePressed>(_onNegatePressed);
+    on<ErrorAcknowledged>(_onErrorAcknowledged);
   }
 
   /// Handles numeric digit presses.
@@ -82,6 +83,7 @@ class ExpressionDisplayBloc
       errorMessage: null,
       isEvaluationError: false,
       evaluationError: null,
+      showError: false,
     ));
   }
 
@@ -99,6 +101,7 @@ class ExpressionDisplayBloc
       errorMessage: null,
       isEvaluationError: false,
       evaluationError: null,
+      showError: false,
     ));
   }
 
@@ -119,6 +122,7 @@ class ExpressionDisplayBloc
       errorMessage: null,
       isEvaluationError: false,
       evaluationError: null,
+      showError: false,
     ));
   }
 
@@ -139,6 +143,7 @@ class ExpressionDisplayBloc
       errorMessage: null,
       isEvaluationError: false,
       evaluationError: null,
+      showError: false,
     ));
   }
 
@@ -156,6 +161,7 @@ class ExpressionDisplayBloc
       errorMessage: null,
       isEvaluationError: false,
       evaluationError: null,
+      showError: false,
     ));
   }
 
@@ -184,6 +190,7 @@ class ExpressionDisplayBloc
       errorMessage: null,
       isEvaluationError: false,
       evaluationError: null,
+      showError: false,
     ));
   }
 
@@ -209,6 +216,7 @@ class ExpressionDisplayBloc
         errorMessage: null,
         isEvaluationError: false,
         evaluationError: null,
+        showError: false,
       ));
     }
   }
@@ -219,7 +227,8 @@ class ExpressionDisplayBloc
   /// and emits the result. Handles errors gracefully by setting appropriate
   /// error states:
   /// - [EvaluationSuccess]: Updates result with computed value
-  /// - [EvaluationInvalidInput]: Sets isEvaluationError for toast notification
+  /// - [EvaluationInvalidInput]: Sets showError for toast notification while
+  ///   preserving the previous result value
   /// - [EvaluationDivisionByZero]: Shows special display value (Infinity/NaN)
   void _onEqualsPressed(
     EqualsPressed event,
@@ -242,16 +251,19 @@ class ExpressionDisplayBloc
           errorMessage: null,
           isEvaluationError: false,
           evaluationError: null,
+          showError: false,
         ));
       case EvaluationInvalidInput():
-        // Emit error state with isEvaluationError flag for toast notification
+        // Emit error state with showError flag for toast notification
+        // Preserve the previous result value so the result display remains unchanged
         emit(ExpressionDisplayState(
           expression: state.expression,
-          result: null,
+          result: state.result, // Preserve previous result (AC3 requirement)
           hasError: true,
-          errorMessage: evaluationResult.message,
+          errorMessage: 'Invalid Input',
           isEvaluationError: true,
-          evaluationError: evaluationResult.message,
+          evaluationError: 'Invalid Input',
+          showError: true,
         ));
       case EvaluationDivisionByZero():
         // Division by zero is shown as the result (Infinity, -Infinity, or NaN)
@@ -263,6 +275,7 @@ class ExpressionDisplayBloc
           errorMessage: null,
           isEvaluationError: false,
           evaluationError: null,
+          showError: false,
         ));
     }
   }
@@ -287,6 +300,22 @@ class ExpressionDisplayBloc
       errorMessage: null,
       isEvaluationError: false,
       evaluationError: null,
+      showError: false,
     ));
+  }
+
+  /// Handles error acknowledgement after toast display.
+  ///
+  /// Resets the [showError] flag to false after the toast has been displayed,
+  /// preventing repeated toast displays on subsequent state emissions.
+  /// All other state values are preserved.
+  void _onErrorAcknowledged(
+    ErrorAcknowledged event,
+    Emitter<ExpressionDisplayState> emit,
+  ) {
+    // Only emit if there was an error being shown
+    if (state.showError) {
+      emit(state.copyWith(showError: false));
+    }
   }
 }
