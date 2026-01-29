@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/expression_display/expression_display_bloc.dart';
 import '../blocs/expression_display/expression_display_event.dart';
+import 'clear_button_config.dart';
+import 'operator_button_config.dart';
 import 'parenthesis_button_config.dart';
 import 'power_button_config.dart';
 
@@ -25,9 +27,7 @@ class CalculatorButtonGrid extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                _buildFunctionButton(context, 'C', () {
-                  context.read<ExpressionDisplayBloc>().add(const ClearPressed());
-                }),
+                _buildClearButton(context),
                 const SizedBox(width: 12),
                 _buildParenthesisButton(context),
                 const SizedBox(width: 12),
@@ -134,6 +134,25 @@ class CalculatorButtonGrid extends StatelessWidget {
     );
   }
 
+  /// Builds the clear button.
+  ///
+  /// Uses [ClearButtonConfig] for styling and dispatches
+  /// [ClearPressed] event when tapped to reset the expression.
+  Widget _buildClearButton(BuildContext context) {
+    return Expanded(
+      child: _CalculatorButton(
+        key: const Key('clear_button'),
+        label: ClearButtonConfig.label,
+        onPressed: () {
+          context.read<ExpressionDisplayBloc>().add(const ClearPressed());
+        },
+        backgroundColor: ClearButtonConfig.backgroundColor,
+        textColor: ClearButtonConfig.textColor,
+        decoration: ClearButtonConfig.decoration,
+      ),
+    );
+  }
+
   /// Builds the parenthesis toggle button.
   ///
   /// Uses [ParenthesisButtonConfig] for styling and dispatches
@@ -173,18 +192,22 @@ class CalculatorButtonGrid extends StatelessWidget {
   }
 
   /// Builds an operator button (+, -, ×, ÷).
+  ///
+  /// Uses [OperatorButtonConfig] for styling to ensure consistent
+  /// orange (#FF9500) background across all operator buttons.
   Widget _buildOperatorButton(BuildContext context, String operator, VoidCallback onPressed) {
     return Expanded(
       child: _CalculatorButton(
         label: operator,
         onPressed: onPressed,
-        backgroundColor: Colors.orange,
-        textColor: Colors.white,
+        backgroundColor: OperatorButtonConfig.backgroundColor,
+        textColor: OperatorButtonConfig.textColor,
+        decoration: OperatorButtonConfig.decoration,
       ),
     );
   }
 
-  /// Builds a function button (C, %, ⌫).
+  /// Builds a function button (%, ⌫).
   Widget _buildFunctionButton(BuildContext context, String label, VoidCallback onPressed) {
     return Expanded(
       child: _CalculatorButton(
@@ -197,15 +220,20 @@ class CalculatorButtonGrid extends StatelessWidget {
   }
 
   /// Builds the equals button.
+  ///
+  /// Uses [EqualsButtonConfig] for styling to ensure the button displays
+  /// with the correct orange (#FF9500) background color and '=' symbol.
   Widget _buildEqualsButton(BuildContext context) {
     return Expanded(
       child: _CalculatorButton(
-        label: '=',
+        key: const Key('equals_button'),
+        label: EqualsButtonConfig.label,
         onPressed: () {
           context.read<ExpressionDisplayBloc>().add(const EqualsPressed());
         },
-        backgroundColor: Colors.orange,
-        textColor: Colors.white,
+        backgroundColor: EqualsButtonConfig.backgroundColor,
+        textColor: EqualsButtonConfig.textColor,
+        decoration: EqualsButtonConfig.decoration,
       ),
     );
   }

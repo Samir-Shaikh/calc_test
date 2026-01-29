@@ -7,6 +7,7 @@ import 'package:android_calculator_flutter/features/calculator/domain/usecases/i
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/calculator_button_grid.dart';
+import 'package:android_calculator_flutter/features/calculator/presentation/widgets/clear_button_config.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/parenthesis_button_config.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/power_button_config.dart';
 
@@ -89,6 +90,126 @@ void main() {
 
       expect(find.text(PowerButtonConfig.label), findsOneWidget);
       expect(find.text('^'), findsOneWidget);
+    });
+  });
+
+  group('Clear Button', () {
+    testWidgets('displays clear button with correct label', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.text(ClearButtonConfig.label), findsOneWidget);
+      expect(find.text('C'), findsOneWidget);
+    });
+
+    testWidgets('clear button has correct key', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.byKey(const Key('clear_button')), findsOneWidget);
+    });
+
+    testWidgets('clear button is positioned in first row (top-left)', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Find the clear button
+      final clearButton = find.byKey(const Key('clear_button'));
+      expect(clearButton, findsOneWidget);
+
+      // Verify it exists alongside other first-row buttons
+      expect(find.text('C'), findsOneWidget);
+      expect(find.text('()'), findsOneWidget);
+      expect(find.text('%'), findsOneWidget);
+      expect(find.text('÷'), findsOneWidget);
+    });
+
+    testWidgets('tapping clear button dispatches ClearPressed event', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Add some digits first
+      await tester.tap(find.text('5'));
+      await tester.pump();
+      await tester.tap(find.text('3'));
+      await tester.pump();
+
+      expect(bloc.state.expression.value, equals('53'));
+
+      // Tap the clear button
+      await tester.tap(find.byKey(const Key('clear_button')));
+      await tester.pump();
+
+      // After tapping, expression should be empty
+      expect(bloc.state.expression.value, isEmpty);
+    });
+
+    testWidgets('clear button resets expression after complex input', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Build a complex expression: (5+3)×2
+      await tester.tap(find.byKey(const Key('parenthesis_button'))); // (
+      await tester.pump();
+      await tester.tap(find.text('5'));
+      await tester.pump();
+      await tester.tap(find.text('+'));
+      await tester.pump();
+      await tester.tap(find.text('3'));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('parenthesis_button'))); // )
+      await tester.pump();
+      await tester.tap(find.text('×'));
+      await tester.pump();
+      await tester.tap(find.text('2'));
+      await tester.pump();
+
+      expect(bloc.state.expression.value, equals('(5+3)×2'));
+
+      // Clear the expression
+      await tester.tap(find.byKey(const Key('clear_button')));
+      await tester.pump();
+
+      // Expression should be empty
+      expect(bloc.state.expression.value, isEmpty);
+    });
+
+    testWidgets('clear button uses gray background color', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final clearButtonFinder = find.byKey(const Key('clear_button'));
+      expect(clearButtonFinder, findsOneWidget);
+
+      // Verify the button's decoration uses the correct background color
+      final container = tester.widget<Container>(
+        find.descendant(
+          of: clearButtonFinder,
+          matching: find.byType(Container),
+        ).first,
+      );
+
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, equals(ClearButtonConfig.backgroundColor));
+    });
+
+    testWidgets('clear button can be tapped multiple times', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Add digits, clear, add more digits, clear again
+      await tester.tap(find.text('1'));
+      await tester.pump();
+      await tester.tap(find.text('2'));
+      await tester.pump();
+      expect(bloc.state.expression.value, equals('12'));
+
+      await tester.tap(find.byKey(const Key('clear_button')));
+      await tester.pump();
+      expect(bloc.state.expression.value, isEmpty);
+
+      await tester.tap(find.text('3'));
+      await tester.pump();
+      await tester.tap(find.text('4'));
+      await tester.pump();
+      expect(bloc.state.expression.value, equals('34'));
+
+      await tester.tap(find.byKey(const Key('clear_button')));
+      await tester.pump();
+      expect(bloc.state.expression.value, isEmpty);
     });
   });
 
