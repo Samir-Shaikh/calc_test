@@ -21,6 +21,37 @@ class CalculatorColors {
   /// button while maintaining good contrast with white text.
   static const Color powerButtonBackground = Color(0xFF505050);
 
+  /// Background color for the clear button (#505050).
+  ///
+  /// A gray color that provides visual distinction for the clear
+  /// button while maintaining good contrast with white text.
+  static const Color clearButtonBackground = Color(0xFF505050);
+
+  /// Background color for the backspace button (#505050).
+  ///
+  /// A gray color that provides visual distinction for the backspace
+  /// button while maintaining good contrast with white icon.
+  static const Color backspaceButtonBackground = Color(0xFF505050);
+
+  /// Background color for the negate button (#505050).
+  ///
+  /// A gray color that provides visual distinction for the negate
+  /// button while maintaining good contrast with white text.
+  static const Color negateButtonBackground = Color(0xFF505050);
+
+  /// Background color for operator buttons (#FF9500).
+  ///
+  /// An orange color used for operator buttons (+, -, ×, ÷) and the
+  /// equals button, providing visual distinction and good contrast
+  /// with white text.
+  static const Color operatorButtonBackground = Color(0xFFFF9500);
+
+  /// Background color for the equals button (#FF9500).
+  ///
+  /// Uses the same orange color as other operator buttons for
+  /// visual consistency across the calculator UI.
+  static const Color equalsButtonBackground = Color(0xFFFF9500);
+
   /// Text color for buttons with dark backgrounds.
   ///
   /// White color to ensure readability on dark button backgrounds

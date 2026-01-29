@@ -27,6 +27,51 @@ class CalculatorButtonDecorations {
     shape: BoxShape.circle,
   );
 
+  /// Decoration for the clear button.
+  ///
+  /// Features a circular shape with gray (#505050) background color
+  /// that provides visual distinction from other button types.
+  static BoxDecoration clearButton = BoxDecoration(
+    color: CalculatorColors.clearButtonBackground,
+    shape: BoxShape.circle,
+  );
+
+  /// Decoration for the backspace button.
+  ///
+  /// Features a circular shape with gray (#505050) background color
+  /// that provides visual distinction from other button types.
+  static BoxDecoration backspaceButton = BoxDecoration(
+    color: CalculatorColors.backspaceButtonBackground,
+    shape: BoxShape.circle,
+  );
+
+  /// Decoration for the negate button.
+  ///
+  /// Features a circular shape with gray (#505050) background color
+  /// that provides visual distinction from other button types.
+  static BoxDecoration negateButton = BoxDecoration(
+    color: CalculatorColors.negateButtonBackground,
+    shape: BoxShape.circle,
+  );
+
+  /// Decoration for operator buttons (+, -, ×, ÷).
+  ///
+  /// Features a circular shape with orange (#FF9500) background color
+  /// that provides visual distinction for operator buttons.
+  static BoxDecoration operatorButton = BoxDecoration(
+    color: CalculatorColors.operatorButtonBackground,
+    shape: BoxShape.circle,
+  );
+
+  /// Decoration for the equals button.
+  ///
+  /// Features a circular shape with orange (#FF9500) background color
+  /// consistent with other operator buttons.
+  static BoxDecoration equalsButton = BoxDecoration(
+    color: CalculatorColors.equalsButtonBackground,
+    shape: BoxShape.circle,
+  );
+
   /// Creates a custom circular button decoration with the specified color.
   ///
   /// Use this factory method when you need a circular button with

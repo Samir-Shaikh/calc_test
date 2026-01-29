@@ -9,5 +9,6 @@ export 'backspace_button_config.dart';
 export 'calculator_button_grid.dart';
 export 'calculator_toast.dart';
 export 'clear_button_config.dart';
+export 'negate_button_config.dart';
 export 'parenthesis_button_config.dart';
 export 'power_button_config.dart';
