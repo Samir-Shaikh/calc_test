@@ -5,5 +5,6 @@
 library;
 
 export 'calculator_button_grid.dart';
+export 'calculator_toast.dart';
 export 'parenthesis_button_config.dart';
 export 'power_button_config.dart';
