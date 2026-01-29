@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/clear_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
@@ -485,6 +486,7 @@ class _TestCalculatorScreenState extends State<_TestCalculatorScreen> {
   late final InsertParenthesisUseCase _insertParenthesisUseCase;
   late final InsertOperatorUseCase _insertOperatorUseCase;
   late final EvaluateExpressionUseCase _evaluateExpressionUseCase;
+  late final ClearExpressionUseCase _clearExpressionUseCase;
   late final ExpressionDisplayBloc _bloc;
 
   @override
@@ -493,10 +495,12 @@ class _TestCalculatorScreenState extends State<_TestCalculatorScreen> {
     _insertParenthesisUseCase = InsertParenthesisUseCase();
     _insertOperatorUseCase = InsertOperatorUseCase();
     _evaluateExpressionUseCase = EvaluateExpressionUseCase();
+    _clearExpressionUseCase = ClearExpressionUseCase();
     _bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: _insertParenthesisUseCase,
       insertOperatorUseCase: _insertOperatorUseCase,
       evaluateExpressionUseCase: _evaluateExpressionUseCase,
+      clearExpressionUseCase: _clearExpressionUseCase,
     );
   }
 

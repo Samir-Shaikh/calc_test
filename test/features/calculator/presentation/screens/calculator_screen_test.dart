@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/clear_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
@@ -14,16 +15,19 @@ void main() {
   late InsertParenthesisUseCase insertParenthesisUseCase;
   late InsertOperatorUseCase insertOperatorUseCase;
   late EvaluateExpressionUseCase evaluateExpressionUseCase;
+  late ClearExpressionUseCase clearExpressionUseCase;
   late ExpressionDisplayBloc bloc;
 
   setUp(() {
     insertParenthesisUseCase = InsertParenthesisUseCase();
     insertOperatorUseCase = InsertOperatorUseCase();
     evaluateExpressionUseCase = EvaluateExpressionUseCase();
+    clearExpressionUseCase = ClearExpressionUseCase();
     bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: insertParenthesisUseCase,
       insertOperatorUseCase: insertOperatorUseCase,
       evaluateExpressionUseCase: evaluateExpressionUseCase,
+      clearExpressionUseCase: clearExpressionUseCase,
     );
   });
 
@@ -360,19 +364,21 @@ void main() {
       // Initial state - no error
       expect(bloc.state.isEvaluationError, isFalse);
 
-      // Enter invalid expression
+      // Type valid expression parts
       await tester.tap(find.text('5'));
       await tester.pump();
+      
+      // Still no error
+      expect(bloc.state.isEvaluationError, isFalse);
+
       await tester.tap(find.text('+'));
       await tester.pump();
 
-      // Trigger evaluation of invalid expression
+      // Trigger error
       await tester.tap(find.byKey(const Key('equals_button')));
       await tester.pump();
 
-      // Verify the state transition that triggers BlocListener
-      // The BlocListener's listenWhen checks:
-      // !previous.isEvaluationError && current.isEvaluationError
+      // Now should be in error state
       expect(bloc.state.isEvaluationError, isTrue);
       expect(bloc.state.evaluationError, isNotNull);
       

@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../domain/entities/expression.dart';
+import '../../../domain/usecases/clear_expression_use_case.dart';
 import '../../../domain/usecases/evaluate_expression_use_case.dart';
 import '../../../domain/usecases/insert_operator_use_case.dart';
 import '../../../domain/usecases/insert_parenthesis_use_case.dart';
@@ -23,19 +23,25 @@ class ExpressionDisplayBloc
   /// Use case for evaluating mathematical expressions.
   final EvaluateExpressionUseCase _evaluateExpressionUseCase;
 
+  /// Use case for clearing the expression and resetting state.
+  final ClearExpressionUseCase _clearExpressionUseCase;
+
   /// Creates an ExpressionDisplayBloc with the required use cases.
   ///
   /// The [insertParenthesisUseCase] handles the toggle logic for
   /// inserting left or right parentheses.
   /// The [insertOperatorUseCase] handles operator insertion with validation.
   /// The [evaluateExpressionUseCase] handles expression evaluation.
+  /// The [clearExpressionUseCase] handles clearing the expression and resetting state.
   ExpressionDisplayBloc({
     required InsertParenthesisUseCase insertParenthesisUseCase,
     required InsertOperatorUseCase insertOperatorUseCase,
     required EvaluateExpressionUseCase evaluateExpressionUseCase,
+    required ClearExpressionUseCase clearExpressionUseCase,
   })  : _insertParenthesisUseCase = insertParenthesisUseCase,
         _insertOperatorUseCase = insertOperatorUseCase,
         _evaluateExpressionUseCase = evaluateExpressionUseCase,
+        _clearExpressionUseCase = clearExpressionUseCase,
         super(ExpressionDisplayState.initial()) {
     on<NumericPressed>(_onNumericPressed);
     on<OperatorPressed>(_onOperatorPressed);
@@ -48,30 +54,36 @@ class ExpressionDisplayBloc
   }
 
   /// Handles numeric digit presses.
+  /// Clears any evaluation error state from previous operations.
   void _onNumericPressed(
     NumericPressed event,
     Emitter<ExpressionDisplayState> emit,
   ) {
     final newExpression = state.expression.insertAt(event.digit);
-    emit(state.copyWith(
+    emit(ExpressionDisplayState(
       expression: newExpression,
       result: null,
       hasError: false,
       errorMessage: null,
+      isEvaluationError: false,
+      evaluationError: null,
     ));
   }
 
   /// Handles operator presses.
+  /// Clears any evaluation error state from previous operations.
   void _onOperatorPressed(
     OperatorPressed event,
     Emitter<ExpressionDisplayState> emit,
   ) {
     final newExpression = state.expression.insertAt(event.operator);
-    emit(state.copyWith(
+    emit(ExpressionDisplayState(
       expression: newExpression,
       result: null,
       hasError: false,
       errorMessage: null,
+      isEvaluationError: false,
+      evaluationError: null,
     ));
   }
 
@@ -79,16 +91,19 @@ class ExpressionDisplayBloc
   ///
   /// Uses the InsertOperatorUseCase to insert the '^' operator
   /// with proper validation (e.g., prevents consecutive operators).
+  /// Clears any evaluation error state from previous operations.
   void _onPowerOperatorPressed(
     PowerOperatorPressed event,
     Emitter<ExpressionDisplayState> emit,
   ) {
     final newExpression = _insertOperatorUseCase.execute(state.expression, '^');
-    emit(state.copyWith(
+    emit(ExpressionDisplayState(
       expression: newExpression,
       result: null,
       hasError: false,
       errorMessage: null,
+      isEvaluationError: false,
+      evaluationError: null,
     ));
   }
 
@@ -96,71 +111,92 @@ class ExpressionDisplayBloc
   ///
   /// Uses the InsertParenthesisUseCase to determine whether to insert
   /// an opening '(' or closing ')' parenthesis based on the toggle state.
+  /// Clears any evaluation error state from previous operations.
   void _onParenthesisPressed(
     ParenthesisPressed event,
     Emitter<ExpressionDisplayState> emit,
   ) {
     final newExpression = _insertParenthesisUseCase.execute(state.expression);
-    emit(state.copyWith(
+    emit(ExpressionDisplayState(
       expression: newExpression,
       result: null,
       hasError: false,
       errorMessage: null,
+      isEvaluationError: false,
+      evaluationError: null,
     ));
   }
 
   /// Handles decimal point presses.
+  /// Clears any evaluation error state from previous operations.
   void _onDecimalPressed(
     DecimalPressed event,
     Emitter<ExpressionDisplayState> emit,
   ) {
     final newExpression = state.expression.insertAt('.');
-    emit(state.copyWith(
+    emit(ExpressionDisplayState(
       expression: newExpression,
       result: null,
       hasError: false,
       errorMessage: null,
+      isEvaluationError: false,
+      evaluationError: null,
     ));
   }
 
   /// Handles clear button presses.
   ///
-  /// Clears the expression and resets the parenthesis bracket state
-  /// to ensure the next parenthesis press inserts '('.
+  /// Uses the ClearExpressionUseCase to reset the expression state.
+  /// Emits a new state with empty expression, empty result, and
+  /// resets the bracket toggle state to ensure the next parenthesis
+  /// press inserts '('.
+  /// Also clears any evaluation error state.
   void _onClearPressed(
     ClearPressed event,
     Emitter<ExpressionDisplayState> emit,
   ) {
-    // Reset the bracket state so next parenthesis insertion starts with '('
+    // Execute the clear use case to get the reset state
+    final clearResult = _clearExpressionUseCase.execute();
+
+    // Reset the bracket state in the parenthesis use case
+    // so next parenthesis insertion starts with '('
     _insertParenthesisUseCase.resetBracketState();
 
     emit(ExpressionDisplayState(
-      expression: Expression.empty(),
+      expression: clearResult.expression,
       result: null,
       hasError: false,
       errorMessage: null,
+      isEvaluationError: false,
+      evaluationError: null,
     ));
   }
 
   /// Handles backspace/delete presses.
+  /// Clears any evaluation error state from previous operations.
   void _onBackspacePressed(
     BackspacePressed event,
     Emitter<ExpressionDisplayState> emit,
   ) {
     final newExpression = state.expression.deleteBeforeCursor();
-    emit(state.copyWith(
+    emit(ExpressionDisplayState(
       expression: newExpression,
       result: null,
       hasError: false,
       errorMessage: null,
+      isEvaluationError: false,
+      evaluationError: null,
     ));
   }
 
   /// Handles equals button presses.
   ///
   /// Evaluates the current expression using the EvaluateExpressionUseCase
-  /// and emits the result. Handles errors gracefully by setting hasError
-  /// and errorMessage in the state.
+  /// and emits the result. Handles errors gracefully by setting appropriate
+  /// error states:
+  /// - [EvaluationSuccess]: Updates result with computed value
+  /// - [EvaluationInvalidInput]: Sets isEvaluationError for toast notification
+  /// - [EvaluationDivisionByZero]: Shows special display value (Infinity/NaN)
   void _onEqualsPressed(
     EqualsPressed event,
     Emitter<ExpressionDisplayState> emit,
@@ -170,21 +206,40 @@ class ExpressionDisplayBloc
       return;
     }
 
-    final result = _evaluateExpressionUseCase.execute(state.expression.value);
+    final evaluationResult = _evaluateExpressionUseCase.execute(state.expression.value);
 
-    // Check if evaluation returned an error
-    if (result == 'Error') {
-      emit(state.copyWith(
-        result: null,
-        hasError: true,
-        errorMessage: 'Invalid expression',
-      ));
-    } else {
-      emit(state.copyWith(
-        result: result,
-        hasError: false,
-        errorMessage: null,
-      ));
+    // Handle the evaluation result using pattern matching
+    switch (evaluationResult) {
+      case EvaluationSuccess():
+        emit(ExpressionDisplayState(
+          expression: state.expression,
+          result: evaluationResult.formattedValue,
+          hasError: false,
+          errorMessage: null,
+          isEvaluationError: false,
+          evaluationError: null,
+        ));
+      case EvaluationInvalidInput():
+        // Emit error state with isEvaluationError flag for toast notification
+        emit(ExpressionDisplayState(
+          expression: state.expression,
+          result: null,
+          hasError: true,
+          errorMessage: evaluationResult.message,
+          isEvaluationError: true,
+          evaluationError: evaluationResult.message,
+        ));
+      case EvaluationDivisionByZero():
+        // Division by zero is shown as the result (Infinity, -Infinity, or NaN)
+        // rather than as an error, matching standard calculator behavior
+        emit(ExpressionDisplayState(
+          expression: state.expression,
+          result: evaluationResult.displayValue,
+          hasError: false,
+          errorMessage: null,
+          isEvaluationError: false,
+          evaluationError: null,
+        ));
     }
   }
 }

@@ -9,7 +9,7 @@ import 'package:android_calculator_flutter/features/calculator/presentation/bloc
 import 'package:android_calculator_flutter/features/calculator/presentation/theme/calculator_button_decorations.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/theme/calculator_colors.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/calculator_button_grid.dart';
-import 'package:android_calculator_flutter/features/calculator/presentation/widgets/power_button_config.dart';
+import 'package:android_calculator_flutter/features/calculator/presentation/widgets/operator_button_config.dart';
 
 void main() {
   late InsertParenthesisUseCase insertParenthesisUseCase;
@@ -35,11 +35,11 @@ void main() {
     bloc.close();
   });
 
-  group('Power Button Golden Tests', () {
-    group('Isolated Power Button', () {
-      testWidgets('renders power button with gray (#505050) background',
+  group('Equals Button Golden Tests', () {
+    group('Isolated Equals Button', () {
+      testWidgets('renders equals button with orange (#FF9500) background',
           (WidgetTester tester) async {
-        // Build an isolated power button matching the exact styling
+        // Build an isolated equals button matching the exact styling
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -49,12 +49,12 @@ void main() {
                   width: 80,
                   height: 80,
                   child: Container(
-                    key: const Key('isolated_power_button'),
-                    decoration: PowerButtonConfig.decoration,
+                    key: const Key('isolated_equals_button'),
+                    decoration: EqualsButtonConfig.decoration,
                     child: Center(
                       child: Text(
-                        PowerButtonConfig.label,
-                        style: PowerButtonConfig.textStyle,
+                        EqualsButtonConfig.label,
+                        style: EqualsButtonConfig.textStyle,
                       ),
                     ),
                   ),
@@ -66,14 +66,14 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        // Capture golden image of isolated power button
+        // Capture golden image of isolated equals button
         await expectLater(
-          find.byKey(const Key('isolated_power_button')),
-          matchesGoldenFile('power_button_isolated.png'),
+          find.byKey(const Key('isolated_equals_button')),
+          matchesGoldenFile('equals_button_isolated.png'),
         );
       });
 
-      testWidgets('verifies button decoration matches gray color specification',
+      testWidgets('verifies button decoration matches orange color specification',
           (WidgetTester tester) async {
         // Build button with explicit color verification
         await tester.pumpWidget(
@@ -87,12 +87,12 @@ void main() {
                   child: Container(
                     key: const Key('color_verification_button'),
                     decoration: const BoxDecoration(
-                      color: Color(0xFF505050), // Explicit #505050
+                      color: Color(0xFFFF9500), // Explicit #FF9500
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
                       child: Text(
-                        '^',
+                        '=',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -109,10 +109,10 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        // Verify the button renders with the expected gray color
+        // Verify the button renders with the expected orange color
         await expectLater(
           find.byKey(const Key('color_verification_button')),
-          matchesGoldenFile('power_button_color_verification.png'),
+          matchesGoldenFile('equals_button_color_verification.png'),
         );
       });
 
@@ -128,11 +128,11 @@ void main() {
                   height: 100,
                   child: Container(
                     key: const Key('circular_shape_button'),
-                    decoration: CalculatorButtonDecorations.powerButton,
+                    decoration: CalculatorButtonDecorations.equalsButton,
                     child: Center(
                       child: Text(
-                        PowerButtonConfig.label,
-                        style: PowerButtonConfig.textStyle,
+                        EqualsButtonConfig.label,
+                        style: EqualsButtonConfig.textStyle,
                       ),
                     ),
                   ),
@@ -147,7 +147,7 @@ void main() {
         // Capture golden to verify circular shape
         await expectLater(
           find.byKey(const Key('circular_shape_button')),
-          matchesGoldenFile('power_button_circular_shape.png'),
+          matchesGoldenFile('equals_button_circular_shape.png'),
         );
       });
     });
@@ -169,7 +169,7 @@ void main() {
         );
       }
 
-      testWidgets('renders power button in calculator grid last row',
+      testWidgets('renders equals button in calculator grid last row',
           (WidgetTester tester) async {
         await tester.pumpWidget(createCalculatorGridWidget());
         await tester.pumpAndSettle();
@@ -177,23 +177,23 @@ void main() {
         // Capture the entire calculator grid showing button positions
         await expectLater(
           find.byType(CalculatorButtonGrid),
-          matchesGoldenFile('calculator_grid_with_power.png'),
+          matchesGoldenFile('calculator_grid_with_equals.png'),
         );
       });
 
-      testWidgets('power button positioned correctly among last row buttons',
+      testWidgets('equals button positioned correctly among last row buttons',
           (WidgetTester tester) async {
         await tester.pumpWidget(createCalculatorGridWidget());
         await tester.pumpAndSettle();
 
-        // Find the power button in the grid
-        final powerButton = find.byKey(const Key('power_button'));
-        expect(powerButton, findsOneWidget);
+        // Find the equals button in the grid
+        final equalsButton = find.byKey(const Key('equals_button'));
+        expect(equalsButton, findsOneWidget);
 
-        // Capture golden of the power button within the grid
+        // Capture golden of the equals button within the grid
         await expectLater(
-          powerButton,
-          matchesGoldenFile('power_button_in_grid.png'),
+          equalsButton,
+          matchesGoldenFile('equals_button_in_grid.png'),
         );
       });
 
@@ -216,10 +216,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Capture the calculator grid showing the last row with power button
+        // Capture the calculator grid showing the last row with equals button
         await expectLater(
           find.byType(CalculatorButtonGrid),
-          matchesGoldenFile('calculator_last_row_with_power.png'),
+          matchesGoldenFile('calculator_last_row_with_equals.png'),
         );
       });
     });
@@ -238,11 +238,11 @@ void main() {
                   child: GestureDetector(
                     child: Container(
                       key: const Key('normal_state_button'),
-                      decoration: PowerButtonConfig.decoration,
+                      decoration: EqualsButtonConfig.decoration,
                       child: Center(
                         child: Text(
-                          PowerButtonConfig.label,
-                          style: PowerButtonConfig.textStyle,
+                          EqualsButtonConfig.label,
+                          style: EqualsButtonConfig.textStyle,
                         ),
                       ),
                     ),
@@ -258,14 +258,14 @@ void main() {
         // Capture golden of button in normal (unpressed) state
         await expectLater(
           find.byKey(const Key('normal_state_button')),
-          matchesGoldenFile('power_button_normal_state.png'),
+          matchesGoldenFile('equals_button_normal_state.png'),
         );
       });
 
       testWidgets('renders button with slightly lighter color for pressed state simulation',
           (WidgetTester tester) async {
-        // Simulate a pressed state with a lighter shade of gray
-        const pressedColor = Color(0xFF606060); // Lighter gray for pressed
+        // Simulate a pressed state with a lighter shade of orange
+        const pressedColor = Color(0xFFFFAA33); // Lighter orange for pressed
 
         await tester.pumpWidget(
           MaterialApp(
@@ -283,8 +283,8 @@ void main() {
                     ),
                     child: Center(
                       child: Text(
-                        PowerButtonConfig.label,
-                        style: PowerButtonConfig.textStyle,
+                        EqualsButtonConfig.label,
+                        style: EqualsButtonConfig.textStyle,
                       ),
                     ),
                   ),
@@ -299,14 +299,14 @@ void main() {
         // Capture golden of button in pressed/highlight state
         await expectLater(
           find.byKey(const Key('pressed_state_button')),
-          matchesGoldenFile('power_button_pressed_state.png'),
+          matchesGoldenFile('equals_button_pressed_state.png'),
         );
       });
 
       testWidgets('compares normal and pressed states side by side',
           (WidgetTester tester) async {
-        const normalColor = Color(0xFF505050);
-        const pressedColor = Color(0xFF606060);
+        const normalColor = Color(0xFFFF9500);
+        const pressedColor = Color(0xFFFFAA33);
 
         await tester.pumpWidget(
           MaterialApp(
@@ -328,8 +328,8 @@ void main() {
                         ),
                         child: Center(
                           child: Text(
-                            PowerButtonConfig.label,
-                            style: PowerButtonConfig.textStyle,
+                            EqualsButtonConfig.label,
+                            style: EqualsButtonConfig.textStyle,
                           ),
                         ),
                       ),
@@ -346,8 +346,8 @@ void main() {
                         ),
                         child: Center(
                           child: Text(
-                            PowerButtonConfig.label,
-                            style: PowerButtonConfig.textStyle,
+                            EqualsButtonConfig.label,
+                            style: EqualsButtonConfig.textStyle,
                           ),
                         ),
                       ),
@@ -364,29 +364,29 @@ void main() {
         // Capture golden comparing both states
         await expectLater(
           find.byKey(const Key('button_states_comparison')),
-          matchesGoldenFile('power_button_states_comparison.png'),
+          matchesGoldenFile('equals_button_states_comparison.png'),
         );
       });
     });
 
     group('Design Specification Verification', () {
-      testWidgets('button background color is exactly #505050',
+      testWidgets('equals button background color is exactly #FF9500',
           (WidgetTester tester) async {
         // This test verifies the exact color value
         expect(
-          CalculatorColors.powerButtonBackground,
-          equals(const Color(0xFF505050)),
+          CalculatorColors.equalsButtonBackground,
+          equals(const Color(0xFFFF9500)),
         );
         expect(
-          PowerButtonConfig.backgroundColor,
-          equals(const Color(0xFF505050)),
+          EqualsButtonConfig.backgroundColor,
+          equals(const Color(0xFFFF9500)),
         );
       });
 
-      testWidgets('button text color is white for contrast',
+      testWidgets('equals button text color is white for contrast',
           (WidgetTester tester) async {
         expect(
-          PowerButtonConfig.textColor,
+          EqualsButtonConfig.textColor,
           equals(Colors.white),
         );
         expect(
@@ -395,15 +395,28 @@ void main() {
         );
       });
 
-      testWidgets('button label is "^"',
+      testWidgets('equals button label is "="',
           (WidgetTester tester) async {
-        expect(PowerButtonConfig.label, equals('^'));
+        expect(EqualsButtonConfig.label, equals('='));
       });
 
-      testWidgets('button has circular shape',
+      testWidgets('equals button has circular shape',
           (WidgetTester tester) async {
-        final decoration = PowerButtonConfig.decoration;
+        final decoration = EqualsButtonConfig.decoration;
         expect(decoration.shape, equals(BoxShape.circle));
+      });
+
+      testWidgets('equals button color matches operator button color',
+          (WidgetTester tester) async {
+        // Verify consistency between equals button and operator buttons
+        expect(
+          CalculatorColors.equalsButtonBackground,
+          equals(CalculatorColors.operatorButtonBackground),
+        );
+        expect(
+          EqualsButtonConfig.backgroundColor,
+          equals(OperatorButtonConfig.backgroundColor),
+        );
       });
 
       testWidgets('renders all design specifications in single golden',
@@ -420,7 +433,7 @@ void main() {
                   children: [
                     // Label showing color hex
                     const Text(
-                      'Background: #505050',
+                      'Background: #FF9500',
                       style: TextStyle(color: Colors.white, fontSize: 14),
                     ),
                     const SizedBox(height: 10),
@@ -429,11 +442,11 @@ void main() {
                       width: 80,
                       height: 80,
                       child: Container(
-                        decoration: PowerButtonConfig.decoration,
+                        decoration: EqualsButtonConfig.decoration,
                         child: Center(
                           child: Text(
-                            PowerButtonConfig.label,
-                            style: PowerButtonConfig.textStyle,
+                            EqualsButtonConfig.label,
+                            style: EqualsButtonConfig.textStyle,
                           ),
                         ),
                       ),
@@ -449,6 +462,11 @@ void main() {
                       'Shape: Circle',
                       style: TextStyle(color: Colors.white, fontSize: 14),
                     ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      'Label: =',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                   ],
                 ),
               ),
@@ -461,7 +479,68 @@ void main() {
         // Capture comprehensive design specification golden
         await expectLater(
           find.byKey(const Key('design_specs_golden')),
-          matchesGoldenFile('power_button_design_specs.png'),
+          matchesGoldenFile('equals_button_design_specs.png'),
+        );
+      });
+    });
+
+    group('AC4 Verification: Equals Button Display', () {
+      testWidgets('AC4: equals button displays "=" symbol and has orange #FF9500 background',
+          (WidgetTester tester) async {
+        // This test directly verifies Acceptance Criteria 4
+        
+        // Verify the color constant is exactly #FF9500
+        expect(
+          CalculatorColors.equalsButtonBackground.value,
+          equals(0xFFFF9500),
+          reason: 'Equals button orange should be exactly #FF9500',
+        );
+
+        // Verify the label is exactly '='
+        expect(
+          EqualsButtonConfig.label,
+          equals('='),
+          reason: 'Equals button should display "=" symbol',
+        );
+
+        // Build and capture the equals button for visual verification
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              backgroundColor: Colors.black,
+              body: Center(
+                child: SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: Container(
+                    key: const Key('ac4_equals_button'),
+                    decoration: BoxDecoration(
+                      color: CalculatorColors.equalsButtonBackground,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        EqualsButtonConfig.label,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // Capture golden for AC4 verification
+        await expectLater(
+          find.byKey(const Key('ac4_equals_button')),
+          matchesGoldenFile('equals_button_ac4_verification.png'),
         );
       });
     });

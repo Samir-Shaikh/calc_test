@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/clear_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
@@ -14,16 +15,19 @@ void main() {
   late InsertParenthesisUseCase insertParenthesisUseCase;
   late InsertOperatorUseCase insertOperatorUseCase;
   late EvaluateExpressionUseCase evaluateExpressionUseCase;
+  late ClearExpressionUseCase clearExpressionUseCase;
   late ExpressionDisplayBloc bloc;
 
   setUp(() {
     insertParenthesisUseCase = InsertParenthesisUseCase();
     insertOperatorUseCase = InsertOperatorUseCase();
     evaluateExpressionUseCase = EvaluateExpressionUseCase();
+    clearExpressionUseCase = ClearExpressionUseCase();
     bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: insertParenthesisUseCase,
       insertOperatorUseCase: insertOperatorUseCase,
       evaluateExpressionUseCase: evaluateExpressionUseCase,
+      clearExpressionUseCase: clearExpressionUseCase,
     );
   });
 
@@ -82,8 +86,8 @@ void main() {
                   height: 80,
                   child: Container(
                     key: const Key('color_verification_button'),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF505050), // Explicit #505050
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF505050), // Explicit #505050
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
