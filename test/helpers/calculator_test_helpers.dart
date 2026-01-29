@@ -1,5 +1,6 @@
 import 'package:android_calculator_flutter/features/calculator/domain/entities/expression.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/clear_expression_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/delete_character_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
@@ -18,6 +19,7 @@ import 'package:android_calculator_flutter/features/calculator/presentation/bloc
 ///   insertOperatorUseCase: InsertOperatorUseCase(),
 ///   evaluateExpressionUseCase: EvaluateExpressionUseCase(),
 ///   clearExpressionUseCase: mockClearUseCase,
+///   deleteCharacterUseCase: DeleteCharacterUseCase(),
 /// );
 /// ```
 class MockClearExpressionUseCase extends ClearExpressionUseCase {
@@ -128,6 +130,30 @@ class MockEvaluateExpressionUseCase extends EvaluateExpressionUseCase {
   }
 }
 
+/// Mock implementation of [DeleteCharacterUseCase] for testing.
+///
+/// This mock allows tests to track calls to the delete character operation.
+class MockDeleteCharacterUseCase extends DeleteCharacterUseCase {
+  /// Counter to track how many times [execute] has been called.
+  int executeCallCount = 0;
+
+  /// The last expression that was passed to [execute].
+  Expression? lastExpression;
+
+  @override
+  Expression execute(Expression expression) {
+    executeCallCount++;
+    lastExpression = expression;
+    return super.execute(expression);
+  }
+
+  /// Resets the mock state.
+  void reset() {
+    executeCallCount = 0;
+    lastExpression = null;
+  }
+}
+
 /// Creates an [ExpressionDisplayBloc] with default use cases for testing.
 ///
 /// This helper function simplifies test setup by creating a BLoC
@@ -143,6 +169,7 @@ ExpressionDisplayBloc createTestBloc({
   InsertOperatorUseCase? insertOperatorUseCase,
   EvaluateExpressionUseCase? evaluateExpressionUseCase,
   ClearExpressionUseCase? clearExpressionUseCase,
+  DeleteCharacterUseCase? deleteCharacterUseCase,
 }) {
   return ExpressionDisplayBloc(
     insertParenthesisUseCase:
@@ -151,6 +178,7 @@ ExpressionDisplayBloc createTestBloc({
     evaluateExpressionUseCase:
         evaluateExpressionUseCase ?? EvaluateExpressionUseCase(),
     clearExpressionUseCase: clearExpressionUseCase ?? ClearExpressionUseCase(),
+    deleteCharacterUseCase: deleteCharacterUseCase ?? DeleteCharacterUseCase(),
   );
 }
 
@@ -173,17 +201,20 @@ ExpressionDisplayBloc createTestBloc({
   MockInsertOperatorUseCase insertOperatorUseCase,
   MockEvaluateExpressionUseCase evaluateExpressionUseCase,
   MockClearExpressionUseCase clearExpressionUseCase,
+  MockDeleteCharacterUseCase deleteCharacterUseCase,
 }) createTestBlocWithMocks() {
   final insertParenthesisUseCase = MockInsertParenthesisUseCase();
   final insertOperatorUseCase = MockInsertOperatorUseCase();
   final evaluateExpressionUseCase = MockEvaluateExpressionUseCase();
   final clearExpressionUseCase = MockClearExpressionUseCase();
+  final deleteCharacterUseCase = MockDeleteCharacterUseCase();
 
   final bloc = ExpressionDisplayBloc(
     insertParenthesisUseCase: insertParenthesisUseCase,
     insertOperatorUseCase: insertOperatorUseCase,
     evaluateExpressionUseCase: evaluateExpressionUseCase,
     clearExpressionUseCase: clearExpressionUseCase,
+    deleteCharacterUseCase: deleteCharacterUseCase,
   );
 
   return (
@@ -192,5 +223,6 @@ ExpressionDisplayBloc createTestBloc({
     insertOperatorUseCase: insertOperatorUseCase,
     evaluateExpressionUseCase: evaluateExpressionUseCase,
     clearExpressionUseCase: clearExpressionUseCase,
+    deleteCharacterUseCase: deleteCharacterUseCase,
   );
 }

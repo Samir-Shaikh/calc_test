@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/clear_expression_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/delete_character_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
@@ -13,17 +14,20 @@ void main() {
   late InsertOperatorUseCase insertOperatorUseCase;
   late EvaluateExpressionUseCase evaluateExpressionUseCase;
   late ClearExpressionUseCase clearExpressionUseCase;
+  late DeleteCharacterUseCase deleteCharacterUseCase;
 
   setUp(() {
     insertParenthesisUseCase = InsertParenthesisUseCase();
     insertOperatorUseCase = InsertOperatorUseCase();
     evaluateExpressionUseCase = EvaluateExpressionUseCase();
     clearExpressionUseCase = ClearExpressionUseCase();
+    deleteCharacterUseCase = DeleteCharacterUseCase();
     bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: insertParenthesisUseCase,
       insertOperatorUseCase: insertOperatorUseCase,
       evaluateExpressionUseCase: evaluateExpressionUseCase,
       clearExpressionUseCase: clearExpressionUseCase,
+      deleteCharacterUseCase: deleteCharacterUseCase,
     );
   });
 

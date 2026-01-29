@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/usecases/clear_expression_use_case.dart';
+import '../../../domain/usecases/delete_character_use_case.dart';
 import '../../../domain/usecases/evaluate_expression_use_case.dart';
 import '../../../domain/usecases/insert_operator_use_case.dart';
 import '../../../domain/usecases/insert_parenthesis_use_case.dart';
@@ -26,6 +27,9 @@ class ExpressionDisplayBloc
   /// Use case for clearing the expression and resetting state.
   final ClearExpressionUseCase _clearExpressionUseCase;
 
+  /// Use case for deleting characters at the cursor position (backspace).
+  final DeleteCharacterUseCase _deleteCharacterUseCase;
+
   /// Creates an ExpressionDisplayBloc with the required use cases.
   ///
   /// The [insertParenthesisUseCase] handles the toggle logic for
@@ -33,15 +37,18 @@ class ExpressionDisplayBloc
   /// The [insertOperatorUseCase] handles operator insertion with validation.
   /// The [evaluateExpressionUseCase] handles expression evaluation.
   /// The [clearExpressionUseCase] handles clearing the expression and resetting state.
+  /// The [deleteCharacterUseCase] handles deleting characters at the cursor position.
   ExpressionDisplayBloc({
     required InsertParenthesisUseCase insertParenthesisUseCase,
     required InsertOperatorUseCase insertOperatorUseCase,
     required EvaluateExpressionUseCase evaluateExpressionUseCase,
     required ClearExpressionUseCase clearExpressionUseCase,
+    required DeleteCharacterUseCase deleteCharacterUseCase,
   })  : _insertParenthesisUseCase = insertParenthesisUseCase,
         _insertOperatorUseCase = insertOperatorUseCase,
         _evaluateExpressionUseCase = evaluateExpressionUseCase,
         _clearExpressionUseCase = clearExpressionUseCase,
+        _deleteCharacterUseCase = deleteCharacterUseCase,
         super(ExpressionDisplayState.initial()) {
     on<NumericPressed>(_onNumericPressed);
     on<OperatorPressed>(_onOperatorPressed);
@@ -173,20 +180,29 @@ class ExpressionDisplayBloc
   }
 
   /// Handles backspace/delete presses.
+  ///
+  /// Uses the DeleteCharacterUseCase to delete the character before the cursor.
+  /// If the cursor is at position 0 or the expression is empty, no deletion
+  /// occurs (the use case returns the same expression).
   /// Clears any evaluation error state from previous operations.
   void _onBackspacePressed(
     BackspacePressed event,
     Emitter<ExpressionDisplayState> emit,
   ) {
-    final newExpression = state.expression.deleteBeforeCursor();
-    emit(ExpressionDisplayState(
-      expression: newExpression,
-      result: null,
-      hasError: false,
-      errorMessage: null,
-      isEvaluationError: false,
-      evaluationError: null,
-    ));
+    final newExpression = _deleteCharacterUseCase.execute(state.expression);
+    
+    // Only emit new state if the expression actually changed
+    // This handles edge cases where no deletion occurs (cursor at 0 or empty expression)
+    if (newExpression != state.expression) {
+      emit(ExpressionDisplayState(
+        expression: newExpression,
+        result: null,
+        hasError: false,
+        errorMessage: null,
+        isEvaluationError: false,
+        evaluationError: null,
+      ));
+    }
   }
 
   /// Handles equals button presses.

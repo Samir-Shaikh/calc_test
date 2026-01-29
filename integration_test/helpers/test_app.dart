@@ -1,5 +1,6 @@
 import 'package:android_calculator_flutter/app/di/calculator_module.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/clear_expression_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/delete_character_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
@@ -41,6 +42,9 @@ class TestApp extends StatelessWidget {
   /// Optional custom ClearExpressionUseCase for testing.
   final ClearExpressionUseCase? clearExpressionUseCase;
 
+  /// Optional custom DeleteCharacterUseCase for testing.
+  final DeleteCharacterUseCase? deleteCharacterUseCase;
+
   const TestApp({
     super.key,
     required this.child,
@@ -48,6 +52,7 @@ class TestApp extends StatelessWidget {
     this.insertOperatorUseCase,
     this.evaluateExpressionUseCase,
     this.clearExpressionUseCase,
+    this.deleteCharacterUseCase,
   });
 
   @override
@@ -64,6 +69,7 @@ class TestApp extends StatelessWidget {
         insertOperatorUseCase: insertOperatorUseCase,
         evaluateExpressionUseCase: evaluateExpressionUseCase,
         clearExpressionUseCase: clearExpressionUseCase,
+        deleteCharacterUseCase: deleteCharacterUseCase,
         child: child,
       ),
     );
@@ -149,6 +155,7 @@ class _CalculatorTestScreenState extends State<_CalculatorTestScreen> {
   late final InsertOperatorUseCase _insertOperatorUseCase;
   late final EvaluateExpressionUseCase _evaluateExpressionUseCase;
   late final ClearExpressionUseCase _clearExpressionUseCase;
+  late final DeleteCharacterUseCase _deleteCharacterUseCase;
   late final ExpressionDisplayBloc _bloc;
 
   @override
@@ -158,11 +165,13 @@ class _CalculatorTestScreenState extends State<_CalculatorTestScreen> {
     _insertOperatorUseCase = InsertOperatorUseCase();
     _evaluateExpressionUseCase = EvaluateExpressionUseCase();
     _clearExpressionUseCase = ClearExpressionUseCase();
+    _deleteCharacterUseCase = DeleteCharacterUseCase();
     _bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: _insertParenthesisUseCase,
       insertOperatorUseCase: _insertOperatorUseCase,
       evaluateExpressionUseCase: _evaluateExpressionUseCase,
       clearExpressionUseCase: _clearExpressionUseCase,
+      deleteCharacterUseCase: _deleteCharacterUseCase,
     );
   }
 
@@ -287,6 +296,7 @@ class _CalculatorTestScreenWithToastState
   late final InsertOperatorUseCase _insertOperatorUseCase;
   late final EvaluateExpressionUseCase _evaluateExpressionUseCase;
   late final ClearExpressionUseCase _clearExpressionUseCase;
+  late final DeleteCharacterUseCase _deleteCharacterUseCase;
   late final ExpressionDisplayBloc _bloc;
 
   @override
@@ -296,11 +306,13 @@ class _CalculatorTestScreenWithToastState
     _insertOperatorUseCase = InsertOperatorUseCase();
     _evaluateExpressionUseCase = EvaluateExpressionUseCase();
     _clearExpressionUseCase = ClearExpressionUseCase();
+    _deleteCharacterUseCase = DeleteCharacterUseCase();
     _bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: _insertParenthesisUseCase,
       insertOperatorUseCase: _insertOperatorUseCase,
       evaluateExpressionUseCase: _evaluateExpressionUseCase,
       clearExpressionUseCase: _clearExpressionUseCase,
+      deleteCharacterUseCase: _deleteCharacterUseCase,
     );
   }
 

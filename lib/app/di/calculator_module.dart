@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/calculator/domain/usecases/clear_expression_use_case.dart';
+import '../../features/calculator/domain/usecases/delete_character_use_case.dart';
 import '../../features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import '../../features/calculator/domain/usecases/insert_operator_use_case.dart';
 import '../../features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
@@ -38,6 +39,9 @@ class CalculatorModule extends StatelessWidget {
   /// Optional ClearExpressionUseCase for testing.
   final ClearExpressionUseCase? clearExpressionUseCase;
 
+  /// Optional DeleteCharacterUseCase for testing.
+  final DeleteCharacterUseCase? deleteCharacterUseCase;
+
   const CalculatorModule({
     super.key,
     required this.child,
@@ -46,6 +50,7 @@ class CalculatorModule extends StatelessWidget {
     this.insertOperatorUseCase,
     this.evaluateExpressionUseCase,
     this.clearExpressionUseCase,
+    this.deleteCharacterUseCase,
   });
 
   @override
@@ -64,6 +69,8 @@ class CalculatorModule extends StatelessWidget {
         );
     final clearExpression =
         clearExpressionUseCase ?? ClearExpressionUseCase();
+    final deleteCharacter =
+        deleteCharacterUseCase ?? DeleteCharacterUseCase();
 
     return MultiRepositoryProvider(
       providers: [
@@ -82,6 +89,9 @@ class CalculatorModule extends StatelessWidget {
         RepositoryProvider<ClearExpressionUseCase>.value(
           value: clearExpression,
         ),
+        RepositoryProvider<DeleteCharacterUseCase>.value(
+          value: deleteCharacter,
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -91,6 +101,7 @@ class CalculatorModule extends StatelessWidget {
               insertOperatorUseCase: insertOperator,
               evaluateExpressionUseCase: evaluateExpression,
               clearExpressionUseCase: clearExpression,
+              deleteCharacterUseCase: deleteCharacter,
             ),
           ),
         ],
@@ -121,6 +132,10 @@ extension CalculatorDependencies on BuildContext {
   /// Gets the ClearExpressionUseCase from the context.
   ClearExpressionUseCase get clearExpressionUseCase =>
       read<ClearExpressionUseCase>();
+
+  /// Gets the DeleteCharacterUseCase from the context.
+  DeleteCharacterUseCase get deleteCharacterUseCase =>
+      read<DeleteCharacterUseCase>();
 
   /// Gets the ExpressionDisplayBloc from the context.
   ExpressionDisplayBloc get expressionDisplayBloc =>
