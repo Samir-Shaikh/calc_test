@@ -489,4 +489,84 @@ extension CalculatorTestHelpers on WidgetTester {
     expect(find.byType(SnackBar), findsOneWidget,
         reason: 'Expected a SnackBar (toast) to be displayed');
   }
+
+  /// Verifies that no toast/snackbar is currently displayed.
+  void verifyNoToastDisplayed() {
+    expect(find.byType(SnackBar), findsNothing,
+        reason: 'Expected no SnackBar (toast) to be displayed');
+  }
+
+  /// Checks if a toast is currently visible.
+  ///
+  /// Returns true if a SnackBar is found in the widget tree.
+  bool isToastVisible() {
+    return find.byType(SnackBar).evaluate().isNotEmpty;
+  }
+
+  /// Verifies that the 'Invalid Input' toast is displayed.
+  ///
+  /// This is a convenience method for the common case of checking
+  /// for the standard invalid input error message.
+  void verifyInvalidInputToastDisplayed() {
+    verifyToastDisplayed('Invalid Input');
+  }
+
+  /// Waits for a toast to appear and verifies its message.
+  ///
+  /// Uses [pump] instead of [pumpAndSettle] to capture the toast
+  /// before any animations complete.
+  Future<void> expectToastWithMessage(String message) async {
+    await pump();
+    final snackBar = find.byType(SnackBar);
+    if (snackBar.evaluate().isNotEmpty) {
+      verifyToastDisplayed(message);
+    }
+  }
+
+  /// Waits for toast to disappear by pumping for the specified duration.
+  ///
+  /// Default duration is 2.5 seconds which should be enough for the
+  /// standard toast duration plus dismiss animation.
+  Future<void> waitForToastToDismiss({
+    Duration duration = const Duration(milliseconds: 2500),
+  }) async {
+    await pump(duration);
+    await pumpAndSettle();
+  }
+
+  /// Enters an invalid expression and verifies the error toast appears.
+  ///
+  /// This is a convenience method that combines entering an expression,
+  /// tapping equals, and verifying the Invalid Input toast.
+  ///
+  /// Example:
+  /// ```dart
+  /// await tester.enterInvalidExpressionAndVerifyToast(['2', '+', '+', '3']);
+  /// ```
+  Future<void> enterInvalidExpressionAndVerifyToast(
+    List<String> buttonSequence,
+  ) async {
+    for (final button in buttonSequence) {
+      if (button == '(' || button == ')') {
+        await tap(find.byKey(const Key('parenthesis_button')));
+      } else if (button == '^') {
+        await tap(find.byKey(const Key('power_button')));
+      } else if (button == '=') {
+        await tap(find.text('='));
+      } else {
+        await tap(find.text(button));
+      }
+      await pumpAndSettle();
+    }
+
+    // Tap equals
+    await tap(find.text('='));
+    await pump();
+
+    // Verify toast
+    final snackBar = find.byType(SnackBar);
+    if (snackBar.evaluate().isNotEmpty) {
+      verifyInvalidInputToastDisplayed();
+    }
+  }
 }

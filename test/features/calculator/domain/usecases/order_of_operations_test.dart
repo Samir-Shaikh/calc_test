@@ -1,11 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 
-/// Unit tests for order of operations - specifically verifying that 
-/// multiplication is evaluated before addition (AC1).
+/// Unit tests for order of operations - verifying that:
+/// - Multiplication is evaluated before addition (AC1)
+/// - Division is evaluated before subtraction (AC2)
+/// - Parentheses are evaluated first (AC3)
 /// 
 /// These tests ensure the calculator follows PEMDAS/BODMAS rules where
-/// multiplication (*) has higher precedence than addition (+).
+/// parentheses (P/B) have highest priority, followed by
+/// multiplication (*) and division (/) have higher precedence than 
+/// addition (+) and subtraction (-).
 void main() {
   late EvaluateExpressionUseCase useCase;
 
@@ -73,6 +77,329 @@ void main() {
         expect(result, isA<EvaluationSuccess>());
         expect(getResultValue(result), equals(22.0));
         expect(getResultString(result), equals('22'));
+      });
+    });
+
+    group('Division before Subtraction (AC2)', () {
+      test('AC2: 10-4/2 should equal 8.0, not 3.0', () {
+        // Acceptance Criterion 2: '10-4/2' should equal '8.0'
+        // Division is evaluated first: 4/2 = 2
+        // Then subtraction: 10 - 2 = 8
+        // If evaluated left-to-right without precedence: (10-4)/2 = 3 (incorrect)
+        final result = useCase.execute('10-4/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(8.0));
+        expect(getResultString(result), equals('8'));
+        
+        // Explicitly verify it's NOT 3 (which would be wrong)
+        expect(getResultValue(result), isNot(equals(3.0)));
+      });
+
+      test('4/2-10 should equal -8.0 (division first)', () {
+        // 4/2 = 2, then 2 - 10 = -8
+        final result = useCase.execute('4/2-10');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(-8.0));
+        expect(getResultString(result), equals('-8'));
+      });
+
+      test('20-10/2-5 should equal 10.0 (division before both subtractions)', () {
+        // 10/2 = 5, then 20 - 5 - 5 = 10
+        // If left-to-right: ((20-10)/2)-5 = 0 (incorrect)
+        final result = useCase.execute('20-10/2-5');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(10.0));
+        expect(getResultString(result), equals('10'));
+      });
+
+      test('100/10-5/5 should equal 9.0 (both divisions before subtraction)', () {
+        // 100/10 = 10, 5/5 = 1, then 10 - 1 = 9
+        final result = useCase.execute('100/10-5/5');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(9.0));
+        expect(getResultString(result), equals('9'));
+      });
+    });
+
+    group('Parentheses Priority (AC3)', () {
+      test('AC3: (2+3)*4 should equal 20.0', () {
+        // Acceptance Criterion 3: '(2+3)*4' should equal '20.0'
+        // Parentheses are evaluated first: (2+3) = 5
+        // Then multiplication: 5 * 4 = 20
+        // Without parentheses: 2+3*4 = 14 (multiplication first)
+        final result = useCase.execute('(2+3)*4');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(20.0));
+        expect(getResultString(result), equals('20'));
+      });
+
+      test('((2+3)*4) should equal 20.0 (nested parentheses)', () {
+        // Nested parentheses: innermost evaluated first
+        // (2+3) = 5, then 5*4 = 20, outer parentheses just group the result
+        final result = useCase.execute('((2+3)*4)');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(20.0));
+        expect(getResultString(result), equals('20'));
+      });
+
+      test('(10-4)/2 should equal 3.0 (parentheses override division precedence)', () {
+        // Parentheses force subtraction first: (10-4) = 6
+        // Then division: 6 / 2 = 3
+        // Without parentheses: 10-4/2 = 8 (division first)
+        final result = useCase.execute('(10-4)/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(3.0));
+        expect(getResultString(result), equals('3'));
+      });
+
+      test('2*(3+4)*5 should equal 70.0 (parentheses in middle of expression)', () {
+        // Parentheses first: (3+4) = 7
+        // Then multiplications left to right: 2 * 7 = 14, 14 * 5 = 70
+        final result = useCase.execute('2*(3+4)*5');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(70.0));
+        expect(getResultString(result), equals('70'));
+      });
+
+      test('(2+3)*(4+5) should equal 45.0 (multiple parenthesized groups)', () {
+        // Both parentheses evaluated: (2+3) = 5, (4+5) = 9
+        // Then multiplication: 5 * 9 = 45
+        final result = useCase.execute('(2+3)*(4+5)');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(45.0));
+        expect(getResultString(result), equals('45'));
+      });
+
+      test('((1+2)*(3+4)) should equal 21.0 (nested with multiple groups)', () {
+        // Inner parentheses: (1+2) = 3, (3+4) = 7
+        // Multiplication: 3 * 7 = 21
+        final result = useCase.execute('((1+2)*(3+4))');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(21.0));
+        expect(getResultString(result), equals('21'));
+      });
+
+      test('(1+(2*3)) should equal 7.0 (parentheses with internal precedence)', () {
+        // Inner multiplication first: 2*3 = 6
+        // Then parenthesized addition: 1+6 = 7
+        final result = useCase.execute('(1+(2*3))');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(7.0));
+        expect(getResultString(result), equals('7'));
+      });
+
+      test('((2+3)) should equal 5.0 (double nested parentheses)', () {
+        // Double nested: inner (2+3) = 5, outer just groups
+        final result = useCase.execute('((2+3))');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(5.0));
+        expect(getResultString(result), equals('5'));
+      });
+
+      test('(((4+6))) should equal 10.0 (triple nested parentheses)', () {
+        // Triple nested: 4+6 = 10
+        final result = useCase.execute('(((4+6)))');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(10.0));
+        expect(getResultString(result), equals('10'));
+      });
+
+      test('(5-3)*(8/4) should equal 4.0 (parentheses with subtraction and division)', () {
+        // (5-3) = 2, (8/4) = 2
+        // Then multiplication: 2 * 2 = 4
+        final result = useCase.execute('(5-3)*(8/4)');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(4.0));
+        expect(getResultString(result), equals('4'));
+      });
+
+      test('10/(2+3) should equal 2.0 (parentheses in divisor)', () {
+        // (2+3) = 5, then 10 / 5 = 2
+        final result = useCase.execute('10/(2+3)');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(2.0));
+        expect(getResultString(result), equals('2'));
+      });
+
+      test('(100-50)/(10+15) should equal 2.0 (parentheses in both dividend and divisor)', () {
+        // (100-50) = 50, (10+15) = 25
+        // Then division: 50 / 25 = 2
+        final result = useCase.execute('(100-50)/(10+15)');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(2.0));
+        expect(getResultString(result), equals('2'));
+      });
+    });
+
+    group('Parentheses with Decimals and Negative Numbers', () {
+      test('(1.5+2.5)*4 should equal 16.0', () {
+        // (1.5+2.5) = 4.0, then 4.0 * 4 = 16.0
+        final result = useCase.execute('(1.5+2.5)*4');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(16.0));
+      });
+
+      test('(-5+10)*2 should equal 10.0', () {
+        // (-5+10) = 5, then 5 * 2 = 10
+        final result = useCase.execute('(-5+10)*2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(10.0));
+      });
+
+      test('(3+(-7))*2 should equal -8.0', () {
+        // (3+(-7)) = -4, then -4 * 2 = -8
+        final result = useCase.execute('(3+(-7))*2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(-8.0));
+      });
+    });
+
+    group('Comparing Expressions With and Without Parentheses', () {
+      test('2+3*4 vs (2+3)*4 shows parentheses override precedence', () {
+        final withoutParens = useCase.execute('2+3*4');
+        final withParens = useCase.execute('(2+3)*4');
+        
+        expect(getResultValue(withoutParens), equals(14.0),
+            reason: '2+3*4 should be 14 (multiplication first)');
+        expect(getResultValue(withParens), equals(20.0),
+            reason: '(2+3)*4 should be 20 (parentheses override)');
+        expect(getResultValue(withoutParens), isNot(equals(getResultValue(withParens))),
+            reason: 'Results should differ showing parentheses matter');
+      });
+
+      test('10-4/2 vs (10-4)/2 shows parentheses override precedence', () {
+        final withoutParens = useCase.execute('10-4/2');
+        final withParens = useCase.execute('(10-4)/2');
+        
+        expect(getResultValue(withoutParens), equals(8.0),
+            reason: '10-4/2 should be 8 (division first)');
+        expect(getResultValue(withParens), equals(3.0),
+            reason: '(10-4)/2 should be 3 (parentheses override)');
+        expect(getResultValue(withoutParens), isNot(equals(getResultValue(withParens))),
+            reason: 'Results should differ showing parentheses matter');
+      });
+
+      test('8/2*4 vs 8/(2*4) shows parentheses change evaluation order', () {
+        final withoutParens = useCase.execute('8/2*4');
+        final withParens = useCase.execute('8/(2*4)');
+        
+        // Without parentheses: left to right, 8/2 = 4, then 4*4 = 16
+        expect(getResultValue(withoutParens), equals(16.0),
+            reason: '8/2*4 should be 16 (left to right)');
+        // With parentheses: (2*4) = 8, then 8/8 = 1
+        expect(getResultValue(withParens), equals(1.0),
+            reason: '8/(2*4) should be 1 (parentheses override)');
+      });
+    });
+
+    group('Additional Division Precedence Tests', () {
+      test('50-20/4 should equal 45.0', () {
+        // 20/4 = 5, then 50 - 5 = 45
+        final result = useCase.execute('50-20/4');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(45.0));
+      });
+
+      test('8/4-6/3 should equal 0.0', () {
+        // 8/4 = 2, 6/3 = 2, then 2 - 2 = 0
+        final result = useCase.execute('8/4-6/3');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(0.0));
+      });
+
+      test('1-1/1-1 should equal -1.0', () {
+        // 1/1 = 1, then 1 - 1 - 1 = -1
+        final result = useCase.execute('1-1/1-1');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(-1.0));
+      });
+
+      test('100-50/2 should equal 75.0', () {
+        // 50/2 = 25, then 100 - 25 = 75
+        final result = useCase.execute('100-50/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(75.0));
+      });
+    });
+
+    group('Division vs Subtraction with Decimals', () {
+      test('10.5-3/2 should equal 9.0', () {
+        // 3/2 = 1.5, then 10.5 - 1.5 = 9.0
+        final result = useCase.execute('10.5-3/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(9.0));
+      });
+
+      test('5.5-1.5/3 should equal 5.0', () {
+        // 1.5/3 = 0.5, then 5.5 - 0.5 = 5.0
+        final result = useCase.execute('5.5-1.5/3');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(5.0));
+      });
+    });
+
+    group('Division vs Subtraction with Negative Numbers', () {
+      test('-10-4/2 should equal -12.0', () {
+        // 4/2 = 2, then -10 - 2 = -12
+        final result = useCase.execute('-10-4/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(-12.0));
+      });
+
+      test('10-(-4)/2 should equal 12.0', () {
+        // (-4)/2 = -2, then 10 - (-2) = 12
+        final result = useCase.execute('10-(-4)/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(12.0));
+      });
+    });
+
+    group('Verifying Parentheses Override Division Precedence', () {
+      test('(10-4)/2 should equal 3.0 (parentheses force subtraction first)', () {
+        // Parentheses override: (10-4) = 6, then 6 / 2 = 3
+        final result = useCase.execute('(10-4)/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(3.0));
+      });
+
+      test('comparing 10-4/2 vs (10-4)/2 shows precedence difference', () {
+        final withoutParens = useCase.execute('10-4/2');
+        final withParens = useCase.execute('(10-4)/2');
+        
+        expect(getResultValue(withoutParens), equals(8.0), 
+            reason: '10-4/2 should be 8 (division first)');
+        expect(getResultValue(withParens), equals(3.0), 
+            reason: '(10-4)/2 should be 3 (parentheses override)');
+        expect(getResultValue(withoutParens), isNot(equals(getResultValue(withParens))),
+            reason: 'Results should differ showing precedence matters');
       });
     });
 
@@ -191,6 +518,66 @@ void main() {
         
         expect(result, isA<EvaluationSuccess>());
         expect(getResultValue(result), equals(68.0));
+      });
+    });
+
+    group('Mixed Operations - All Four Operators', () {
+      test('10+4*3-8/2 should equal 18.0', () {
+        // Multiplication and division first: 4*3 = 12, 8/2 = 4
+        // Then left to right: 10 + 12 - 4 = 18
+        final result = useCase.execute('10+4*3-8/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(18.0));
+      });
+
+      test('20-3*4+12/3 should equal 12.0', () {
+        // Multiplication and division first: 3*4 = 12, 12/3 = 4
+        // Then left to right: 20 - 12 + 4 = 12
+        final result = useCase.execute('20-3*4+12/3');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(12.0));
+      });
+
+      test('2*3+4*5-6/2 should equal 23.0', () {
+        // Multiplication and division first: 2*3 = 6, 4*5 = 20, 6/2 = 3
+        // Then left to right: 6 + 20 - 3 = 23
+        final result = useCase.execute('2*3+4*5-6/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(23.0));
+      });
+    });
+
+    group('Complex Expressions with Parentheses and All Operations', () {
+      test('(2+3)*4-10/2 should equal 15.0', () {
+        // Parentheses first: (2+3) = 5
+        // Then multiplication and division: 5*4 = 20, 10/2 = 5
+        // Then subtraction: 20 - 5 = 15
+        final result = useCase.execute('(2+3)*4-10/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(15.0));
+      });
+
+      test('100/(5+5)+2*3 should equal 16.0', () {
+        // Parentheses first: (5+5) = 10
+        // Then division and multiplication: 100/10 = 10, 2*3 = 6
+        // Then addition: 10 + 6 = 16
+        final result = useCase.execute('100/(5+5)+2*3');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(16.0));
+      });
+
+      test('(1+2)*(3+4)/(5+2) should equal 3.0', () {
+        // Parentheses: (1+2) = 3, (3+4) = 7, (5+2) = 7
+        // Then left to right: 3*7 = 21, 21/7 = 3
+        final result = useCase.execute('(1+2)*(3+4)/(5+2)');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(3.0));
       });
     });
   });

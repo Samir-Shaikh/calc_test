@@ -2,136 +2,11 @@ import 'dart:math' as math;
 
 import 'validate_expression_use_case.dart';
 import '../entities/validation_result.dart';
+import '../entities/evaluation_result.dart';
 
-/// Represents the result of an expression evaluation.
-/// 
-/// This sealed class provides type-safe handling of evaluation outcomes,
-/// allowing consumers to exhaustively handle success, invalid input,
-/// and division by zero cases.
-sealed class EvaluationResult {
-  const EvaluationResult();
-  
-  /// Returns true if the evaluation was successful.
-  bool get isSuccess;
-  
-  /// Returns the error message if evaluation failed, null otherwise.
-  String? get errorMessage;
-}
-
-/// Represents a successful evaluation result.
-/// 
-/// Contains the computed value as a double, which can be formatted
-/// for display purposes.
-class EvaluationSuccess extends EvaluationResult {
-  /// The computed result value.
-  final double value;
-  
-  const EvaluationSuccess(this.value);
-  
-  @override
-  bool get isSuccess => true;
-  
-  @override
-  String? get errorMessage => null;
-  
-  /// Returns the result formatted as a display string.
-  /// 
-  /// - Whole numbers are displayed without decimal places
-  /// - Infinity and NaN are displayed as strings
-  String get formattedValue {
-    if (value.isInfinite) {
-      return value.isNegative ? '-Infinity' : 'Infinity';
-    }
-    if (value.isNaN) {
-      return 'NaN';
-    }
-    
-    // Remove trailing zeros for whole numbers
-    if (value == value.truncateToDouble()) {
-      return value.toInt().toString();
-    }
-    return value.toString();
-  }
-  
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is EvaluationSuccess && other.value == value;
-  }
-  
-  @override
-  int get hashCode => value.hashCode;
-  
-  @override
-  String toString() => 'EvaluationSuccess($value)';
-}
-
-/// Represents an invalid input evaluation result.
-/// 
-/// This indicates that the expression could not be evaluated due to
-/// invalid syntax, malformed expressions, or other input errors.
-class EvaluationInvalidInput extends EvaluationResult {
-  /// The error message describing why the input is invalid.
-  final String message;
-  
-  const EvaluationInvalidInput(this.message);
-  
-  @override
-  bool get isSuccess => false;
-  
-  @override
-  String? get errorMessage => message;
-  
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is EvaluationInvalidInput && other.message == message;
-  }
-  
-  @override
-  int get hashCode => message.hashCode;
-  
-  @override
-  String toString() => 'EvaluationInvalidInput($message)';
-}
-
-/// Represents a division by zero evaluation result.
-/// 
-/// This is a special case that may be handled differently from other
-/// errors, such as showing a specific toast message or warning.
-class EvaluationDivisionByZero extends EvaluationResult {
-  /// Whether the result is positive infinity (true) or negative infinity (false).
-  /// Null indicates the result is NaN (0/0 case).
-  final bool? isPositive;
-  
-  const EvaluationDivisionByZero({this.isPositive});
-  
-  @override
-  bool get isSuccess => false;
-  
-  @override
-  String? get errorMessage => 'Division by zero';
-  
-  /// Returns the display string for the division by zero result.
-  String get displayValue {
-    if (isPositive == null) {
-      return 'NaN';
-    }
-    return isPositive! ? 'Infinity' : '-Infinity';
-  }
-  
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is EvaluationDivisionByZero && other.isPositive == isPositive;
-  }
-  
-  @override
-  int get hashCode => isPositive.hashCode;
-  
-  @override
-  String toString() => 'EvaluationDivisionByZero(isPositive: $isPositive)';
-}
+// Re-export evaluation result types for backward compatibility
+// This allows existing code that imports from this file to continue working
+export '../entities/evaluation_result.dart';
 
 /// Use case for evaluating mathematical expressions.
 /// 
@@ -139,8 +14,38 @@ class EvaluationDivisionByZero extends EvaluationResult {
 /// returning an [EvaluationResult] that represents either success with the
 /// computed value, invalid input with an error message, or division by zero.
 /// 
+/// ## Order of Operations (PEMDAS/BODMAS)
+/// 
+/// This evaluator respects the standard mathematical order of operations:
+/// 
+/// 1. **P**arentheses / **B**rackets - Evaluated first, innermost to outermost
+/// 2. **E**xponents / **O**rders (^) - Evaluated second, right-to-left associativity
+/// 3. **M**ultiplication (*) and **D**ivision (/) - Left-to-right evaluation
+/// 4. **A**ddition (+) and **S**ubtraction (-) - Left-to-right evaluation
+/// 
+/// ### Examples:
+/// - `'2+3*4'` = 14.0 (multiplication before addition: 2 + 12 = 14)
+/// - `'10-4/2'` = 8.0 (division before subtraction: 10 - 2 = 8)
+/// - `'(2+3)*4'` = 20.0 (parentheses first: 5 * 4 = 20)
+/// - `'2^3+1'` = 9.0 (exponent before addition: 8 + 1 = 9)
+/// - `'2^3^2'` = 512.0 (right-to-left: 2^(3^2) = 2^9 = 512)
+/// - `'2+3*4^2'` = 50.0 (exponent, then multiply, then add: 2 + 3*16 = 2 + 48 = 50)
+/// 
+/// ### Power Operator (^)
+/// 
+/// The `^` operator is converted to [math.pow] for evaluation. Power operations
+/// are right-associative, meaning `2^3^2` is evaluated as `2^(3^2)` = 512,
+/// not `(2^3)^2` = 64.
+/// 
 /// The use case integrates with [ValidateExpressionUseCase] to validate
 /// expressions before evaluation, ensuring proper error messages are returned.
+/// 
+/// ## Error Handling Strategy
+/// 
+/// 1. Pre-evaluation validation catches syntax errors early
+/// 2. Try-catch blocks wrap all evaluation logic to catch runtime exceptions
+/// 3. Exceptions are mapped to user-friendly messages via [EvaluationErrorMapper]
+/// 4. Original error details are preserved for debugging/logging
 class EvaluateExpressionUseCase {
   final ValidateExpressionUseCase _validateExpressionUseCase;
   
@@ -154,6 +59,12 @@ class EvaluateExpressionUseCase {
   /// Takes an [expression] string containing a mathematical expression
   /// (e.g., "10/0", "5+3*2", "(2+3)*4", "2^3") and returns the evaluated result.
   /// 
+  /// The evaluation respects PEMDAS/BODMAS order of operations:
+  /// - Parentheses are evaluated first (innermost to outermost)
+  /// - Exponents (^) are evaluated next (right-to-left associativity)
+  /// - Multiplication (*) and Division (/) are evaluated left-to-right
+  /// - Addition (+) and Subtraction (-) are evaluated left-to-right
+  /// 
   /// Returns:
   /// - [EvaluationSuccess] with the computed value on successful evaluation
   /// - [EvaluationInvalidInput] with error message for invalid expressions
@@ -161,13 +72,21 @@ class EvaluateExpressionUseCase {
   EvaluationResult execute(String expression) {
     // Handle edge case: empty or whitespace-only expression
     if (expression.trim().isEmpty) {
-      return const EvaluationInvalidInput('Expression cannot be empty');
+      return const EvaluationInvalidInput(
+        'Invalid Input',
+        type: EvaluationErrorType.validationFailure,
+        originalError: 'Expression cannot be empty',
+      );
     }
     
-    // Validate the expression before evaluation
+    // Pre-evaluation validation: validate the expression before attempting evaluation
     final validationResult = _validateExpressionUseCase.execute(expression);
     if (validationResult is ValidationFailure) {
-      return EvaluationInvalidInput(validationResult.message);
+      return EvaluationInvalidInput(
+        'Invalid Input',
+        type: EvaluationErrorType.validationFailure,
+        originalError: validationResult.message,
+      );
     }
     
     try {
@@ -182,8 +101,8 @@ class EvaluateExpressionUseCase {
         return edgeCaseResult;
       }
       
-      // Parse and evaluate the expression
-      final result = _evaluate(normalizedExpression);
+      // Parse and evaluate the expression with try-catch for math_expressions errors
+      final result = _evaluateWithErrorHandling(normalizedExpression);
       
       // Check for division by zero result
       if (result.isInfinite || result.isNaN) {
@@ -192,14 +111,20 @@ class EvaluateExpressionUseCase {
       
       return EvaluationSuccess(result);
     } on FormatException catch (e) {
-      return EvaluationInvalidInput('Invalid expression format: ${e.message}');
-    } on RangeError catch (_) {
-      return const EvaluationInvalidInput('Expression parsing error');
+      // Handle format exceptions from parsing
+      return EvaluationErrorMapper.mapException(e);
+    } on RangeError catch (e) {
+      // Handle range errors from token access
+      return EvaluationErrorMapper.mapException(e);
     } on ArgumentError catch (e) {
-      return EvaluationInvalidInput('Invalid argument: ${e.message}');
+      // Handle argument errors from invalid operations
+      return EvaluationErrorMapper.mapException(e);
+    } on StateError catch (e) {
+      // Handle state errors from math_expressions library
+      return EvaluationErrorMapper.mapException(e);
     } catch (e) {
-      // Catch any other unexpected errors
-      return EvaluationInvalidInput('Evaluation error: ${e.toString()}');
+      // Catch any other unexpected errors and map to user-friendly message
+      return EvaluationErrorMapper.mapException(e);
     }
   }
   
@@ -216,40 +141,89 @@ class EvaluateExpressionUseCase {
     };
   }
   
+  /// Evaluates the expression with comprehensive error handling.
+  /// 
+  /// Wraps the evaluation logic in try-catch to handle any exceptions
+  /// from the parsing and evaluation process.
+  double _evaluateWithErrorHandling(String expression) {
+    try {
+      return _evaluate(expression);
+    } on FormatException {
+      rethrow;
+    } on RangeError {
+      rethrow;
+    } on ArgumentError {
+      rethrow;
+    } on StateError {
+      rethrow;
+    } catch (e) {
+      // Convert unknown exceptions to FormatException for consistent handling
+      throw FormatException('Evaluation failed: ${e.toString()}');
+    }
+  }
+  
   /// Handles edge cases that might slip past validation.
   EvaluationResult? _handleEdgeCases(String expression) {
     final trimmed = expression.replaceAll(' ', '');
     
     // Check for expression with only operators
     if (RegExp(r'^[+\-*/^]+$').hasMatch(trimmed)) {
-      return const EvaluationInvalidInput('Expression contains only operators');
+      return const EvaluationInvalidInput(
+        'Invalid Input',
+        type: EvaluationErrorType.invalidFormat,
+        originalError: 'Expression contains only operators',
+      );
     }
     
     // Check for malformed power expressions like "^2" or "2^"
     if (trimmed.startsWith('^')) {
-      return const EvaluationInvalidInput('Expression cannot start with power operator');
+      return const EvaluationInvalidInput(
+        'Invalid Input',
+        type: EvaluationErrorType.invalidFormat,
+        originalError: 'Expression cannot start with power operator',
+      );
     }
     if (trimmed.endsWith('^')) {
-      return const EvaluationInvalidInput('Expression cannot end with power operator');
+      return const EvaluationInvalidInput(
+        'Invalid Input',
+        type: EvaluationErrorType.invalidFormat,
+        originalError: 'Expression cannot end with power operator',
+      );
     }
     
     // Check for consecutive power operators
     if (trimmed.contains('^^')) {
-      return const EvaluationInvalidInput('Invalid consecutive power operators');
+      return const EvaluationInvalidInput(
+        'Invalid Input',
+        type: EvaluationErrorType.invalidFormat,
+        originalError: 'Invalid consecutive power operators',
+      );
     }
     
     // Check for invalid decimal points
     if (RegExp(r'\d*\.\d*\.\d*').hasMatch(trimmed)) {
-      return const EvaluationInvalidInput('Invalid number format: multiple decimal points');
+      return const EvaluationInvalidInput(
+        'Invalid Input',
+        type: EvaluationErrorType.invalidFormat,
+        originalError: 'Invalid number format: multiple decimal points',
+      );
     }
     
     // Check for adjacent numbers without operator (e.g., "12 34")
     // This handles cases like "5(3)" which should be "5*(3)"
     if (RegExp(r'\d\(').hasMatch(trimmed)) {
-      return const EvaluationInvalidInput('Missing operator before parenthesis');
+      return const EvaluationInvalidInput(
+        'Invalid Input',
+        type: EvaluationErrorType.invalidFormat,
+        originalError: 'Missing operator before parenthesis',
+      );
     }
     if (RegExp(r'\)\d').hasMatch(trimmed)) {
-      return const EvaluationInvalidInput('Missing operator after parenthesis');
+      return const EvaluationInvalidInput(
+        'Invalid Input',
+        type: EvaluationErrorType.invalidFormat,
+        originalError: 'Missing operator after parenthesis',
+      );
     }
     
     return null;
@@ -281,7 +255,15 @@ class EvaluateExpressionUseCase {
   
   /// Evaluates a mathematical expression string.
   /// 
-  /// Supports: +, -, *, /, ^ operators with proper precedence and parentheses.
+  /// Supports: +, -, *, /, ^ operators with proper PEMDAS/BODMAS precedence
+  /// and parentheses for grouping.
+  /// 
+  /// ## Operator Precedence (highest to lowest):
+  /// 
+  /// 1. Parentheses `()` - Evaluated first, innermost to outermost
+  /// 2. Exponentiation `^` - Right-to-left associativity (e.g., 2^3^2 = 2^9 = 512)
+  /// 3. Multiplication `*` and Division `/` - Left-to-right
+  /// 4. Addition `+` and Subtraction `-` - Left-to-right
   double _evaluate(String expression) {
     expression = expression.replaceAll(' ', '');
     
@@ -295,17 +277,22 @@ class EvaluateExpressionUseCase {
       throw const FormatException('Unbalanced parentheses');
     }
     
-    // Handle parentheses recursively
+    // Step 1: Handle parentheses recursively (highest precedence)
+    // Evaluates innermost parentheses first
     expression = _evaluateParentheses(expression);
     
     // Tokenize the expression
     final tokens = _tokenize(expression);
     
-    // Evaluate using shunting-yard algorithm principles
+    // Evaluate using multi-pass approach respecting operator precedence
     return _evaluateTokens(tokens);
   }
   
   /// Recursively evaluates parenthesized sub-expressions.
+  /// 
+  /// Finds the innermost parentheses first and evaluates them, replacing
+  /// the parenthesized expression with its result. This continues until
+  /// no parentheses remain, ensuring parentheses have the highest precedence.
   String _evaluateParentheses(String expression) {
     // Keep evaluating until no parentheses remain
     while (expression.contains('(')) {
@@ -398,21 +385,34 @@ class EvaluateExpressionUseCase {
     return ['+', '-', '*', '/', '^'].contains(char);
   }
   
-  /// Evaluates tokens with proper operator precedence.
+  /// Evaluates tokens with proper PEMDAS/BODMAS operator precedence.
   /// 
-  /// Precedence (highest to lowest):
-  /// 1. ^ (power/exponentiation)
-  /// 2. * and / (multiplication and division)
-  /// 3. + and - (addition and subtraction)
+  /// Uses a multi-pass approach to respect operator precedence:
+  /// 
+  /// **Pass 1**: Evaluate `^` (exponentiation) - right-to-left associativity
+  /// - Example: `2^3^2` becomes `2^9` becomes `512`
+  /// - Uses [math.pow] for the actual computation
+  /// 
+  /// **Pass 2**: Evaluate `*` and `/` (multiplication and division) - left-to-right
+  /// - Example: `12/3*2` becomes `4*2` becomes `8`
+  /// 
+  /// **Pass 3**: Evaluate `+` and `-` (addition and subtraction) - left-to-right
+  /// - Example: `10-5+2` becomes `5+2` becomes `7`
+  /// 
+  /// This approach ensures mathematical correctness for expressions like:
+  /// - `2+3*4^2` = 2 + 3*16 = 2 + 48 = 50
+  /// - `8/2^2` = 8/4 = 2
   double _evaluateTokens(List<String> tokens) {
     if (tokens.isEmpty) {
       return 0;
     }
     
     // First pass: handle ^ (power) - right-to-left associativity
+    // This is the highest precedence after parentheses
     tokens = _evaluatePowerOperators(tokens);
     
-    // Second pass: handle * and /
+    // Second pass: handle * and / (left-to-right)
+    // These have higher precedence than + and -
     final addSubTokens = <String>[];
     var i = 0;
     
@@ -436,7 +436,8 @@ class EvaluateExpressionUseCase {
       i++;
     }
     
-    // Third pass: handle + and -
+    // Third pass: handle + and - (left-to-right)
+    // These have the lowest precedence
     var result = double.parse(addSubTokens[0]);
     i = 1;
     while (i < addSubTokens.length) {
@@ -455,7 +456,12 @@ class EvaluateExpressionUseCase {
   
   /// Evaluates power operators in the token list.
   /// 
-  /// Power operator is right-associative, meaning 2^3^2 = 2^(3^2) = 2^9 = 512
+  /// Power operator `^` is right-associative, meaning:
+  /// - `2^3^2` = `2^(3^2)` = `2^9` = 512
+  /// - NOT `(2^3)^2` = `8^2` = 64
+  /// 
+  /// This is achieved by processing from right to left.
+  /// Uses [math.pow] for the actual exponentiation computation.
   List<String> _evaluatePowerOperators(List<String> tokens) {
     // Process from right to left for right-associativity
     final result = List<String>.from(tokens);

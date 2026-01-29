@@ -32,8 +32,20 @@ enum ToastType {
 ///   type: ToastType.error,
 /// );
 /// ```
+///
+/// For displaying 'Invalid Input' errors specifically, use the convenience
+/// method:
+/// ```dart
+/// CalculatorToast.showInvalidInput(context);
+/// ```
 class CalculatorToast {
   CalculatorToast._();
+
+  /// The standard 'Invalid Input' message displayed to users.
+  ///
+  /// This message is shown when an expression cannot be evaluated
+  /// due to invalid syntax or mathematical errors.
+  static const String invalidInputMessage = 'Invalid Input';
 
   /// Shows a toast notification with the specified [message] and [type].
   ///
@@ -45,11 +57,13 @@ class CalculatorToast {
   /// - [message]: The text message to display in the toast.
   /// - [type]: The type of toast (error, success, info). Defaults to error.
   /// - [duration]: How long the toast should be visible. Defaults to 3 seconds.
+  /// - [onDismissed]: Optional callback invoked when the toast is dismissed.
   static void show(
     BuildContext context, {
     required String message,
     ToastType type = ToastType.error,
     Duration? duration,
+    VoidCallback? onDismissed,
   }) {
     final snackBar = SnackBar(
       content: Row(
@@ -72,7 +86,7 @@ class CalculatorToast {
           ),
         ],
       ),
-      backgroundColor: CalculatorColors.toastBackgroundColor,
+      backgroundColor: _getBackgroundColor(type),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(
@@ -86,7 +100,46 @@ class CalculatorToast {
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(snackBar);
+      ..showSnackBar(snackBar).closed.then((_) {
+        onDismissed?.call();
+      });
+  }
+
+  /// Shows the standardized 'Invalid Input' toast notification.
+  ///
+  /// This is a convenience method that displays the 'Invalid Input' message
+  /// with appropriate error styling and a short duration matching Android's
+  /// Toast.LENGTH_SHORT (approximately 2 seconds).
+  ///
+  /// Parameters:
+  /// - [context]: The BuildContext used to show the SnackBar.
+  /// - [onDismissed]: Optional callback invoked when the toast is dismissed.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// CalculatorToast.showInvalidInput(context);
+  /// ```
+  ///
+  /// Or with a callback:
+  /// ```dart
+  /// CalculatorToast.showInvalidInput(
+  ///   context,
+  ///   onDismissed: () {
+  ///     // Handle toast dismissal
+  ///   },
+  /// );
+  /// ```
+  static void showInvalidInput(
+    BuildContext context, {
+    VoidCallback? onDismissed,
+  }) {
+    show(
+      context,
+      message: invalidInputMessage,
+      type: ToastType.error,
+      duration: CalculatorDimensions.toastDurationShort,
+      onDismissed: onDismissed,
+    );
   }
 
   /// Returns the appropriate icon for the given [type].
@@ -110,6 +163,17 @@ class CalculatorToast {
         return CalculatorColors.toastSuccessColor;
       case ToastType.info:
         return CalculatorColors.toastInfoColor;
+    }
+  }
+
+  /// Returns the appropriate background color for the given [type].
+  static Color _getBackgroundColor(ToastType type) {
+    switch (type) {
+      case ToastType.error:
+        return CalculatorColors.toastErrorBackgroundColor;
+      case ToastType.success:
+      case ToastType.info:
+        return CalculatorColors.toastBackgroundColor;
     }
   }
 }

@@ -108,6 +108,12 @@ class CalculatorColors {
   /// and provides good contrast for text readability.
   static const Color toastBackgroundColor = Color(0xFF323232);
 
+  /// Background color for error toast notifications.
+  ///
+  /// A darker red-tinted background color that provides clear visual
+  /// indication of error states while maintaining readability.
+  static const Color toastErrorBackgroundColor = Color(0xFF442222);
+
   /// Text color for toast notification messages.
   ///
   /// White color to ensure readability on the dark toast background.

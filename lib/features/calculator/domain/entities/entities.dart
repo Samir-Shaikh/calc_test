@@ -2,7 +2,9 @@
 /// 
 /// This file exports all entities from the domain layer,
 /// providing a single import point for consumers.
+library;
 
 export 'expression.dart';
 export 'result_formatter.dart';
 export 'validation_result.dart';
+export 'evaluation_result.dart';

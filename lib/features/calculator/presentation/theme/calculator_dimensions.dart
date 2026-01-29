@@ -174,4 +174,17 @@ class CalculatorDimensions {
   ///
   /// The toast will automatically dismiss after this duration.
   static const Duration toastDuration = Duration(seconds: 3);
+
+  /// Short duration for toast notifications.
+  ///
+  /// Matches Android's Toast.LENGTH_SHORT behavior (approximately 2 seconds).
+  /// Use this for brief notifications like 'Invalid Input' that don't
+  /// require extended reading time.
+  static const Duration toastDurationShort = Duration(seconds: 2);
+
+  /// Long duration for toast notifications.
+  ///
+  /// Matches Android's Toast.LENGTH_LONG behavior (approximately 3.5 seconds).
+  /// Use this for messages that require more reading time.
+  static const Duration toastDurationLong = Duration(milliseconds: 3500);
 }
