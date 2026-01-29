@@ -6,6 +6,24 @@
 class CalculatorDimensions {
   CalculatorDimensions._();
 
+  // ==================== Backspace Button Dimensions ====================
+
+  /// Size (width and height) of the backspace button.
+  ///
+  /// The backspace button is circular, so width and height are equal.
+  static const double backspaceButtonSize = 48.0;
+
+  /// Padding around the backspace button row.
+  ///
+  /// Controls the horizontal padding to align with the button grid.
+  static const double backspaceRowHorizontalPadding = 16.0;
+
+  /// Vertical spacing between the backspace button and the button grid.
+  ///
+  /// Provides visual separation between the backspace button row
+  /// and the main calculator button grid.
+  static const double backspaceButtonBottomSpacing = 8.0;
+
   // ==================== Toast Dimensions ====================
 
   /// Border radius for toast notifications.

@@ -3,14 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/expression_display/expression_display_bloc.dart';
 import '../blocs/expression_display/expression_display_state.dart';
+import '../theme/calculator_dimensions.dart';
+import '../widgets/backspace_button.dart';
 import '../widgets/calculator_button_grid.dart';
 import '../widgets/calculator_toast.dart';
 
 /// The main calculator screen widget.
 ///
 /// This screen displays the calculator interface with an expression display
-/// area and a button grid. It uses [BlocListener] to react to evaluation
-/// errors and display toast notifications without rebuilding the widget tree.
+/// area, a backspace button, and a button grid. It uses [BlocListener] to
+/// react to evaluation errors and display toast notifications without
+/// rebuilding the widget tree.
 ///
 /// The screen requires an [ExpressionDisplayBloc] to be provided in the
 /// widget tree (typically via [CalculatorModule]).
@@ -44,6 +47,8 @@ class CalculatorScreen extends StatelessWidget {
                 flex: 2,
                 child: _ExpressionDisplay(),
               ),
+              // Backspace button row - right-aligned above button grid
+              const _BackspaceButtonRow(),
               // Button grid area
               Expanded(
                 flex: 3,
@@ -102,6 +107,34 @@ class _ExpressionDisplay extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Widget that displays the backspace button row above the button grid.
+///
+/// The backspace button is right-aligned to provide easy access for
+/// deleting the last character in the expression.
+class _BackspaceButtonRow extends StatelessWidget {
+  const _BackspaceButtonRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: CalculatorDimensions.backspaceRowHorizontalPadding,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(
+          bottom: CalculatorDimensions.backspaceButtonBottomSpacing,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            BackspaceButton(),
+          ],
+        ),
+      ),
     );
   }
 }
