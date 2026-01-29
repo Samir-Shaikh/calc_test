@@ -768,3 +768,117 @@ extension CalculatorTestHelpers on WidgetTester {
     }
   }
 }
+
+/// Extension for branding-related test helpers.
+///
+/// Provides helper methods to verify app branding configuration
+/// including theme, title, and Material Design compliance.
+///
+/// Usage:
+/// ```dart
+/// await tester.pumpWidget(const CalculatorApp());
+/// await tester.pumpAndSettle();
+///
+/// // Verify branding
+/// tester.verifyAppTitle('Calculator');
+/// tester.verifyMaterial3Enabled();
+/// tester.verifyDebugBannerDisabled();
+/// ```
+extension BrandingTestHelpers on WidgetTester {
+  /// Verifies that the MaterialApp has the expected title.
+  ///
+  /// [expectedTitle] is the title string to match against.
+  void verifyAppTitle(String expectedTitle) {
+    final materialApp = widget<MaterialApp>(find.byType(MaterialApp));
+    expect(materialApp.title, equals(expectedTitle),
+        reason: 'App title should be "$expectedTitle"');
+  }
+
+  /// Verifies that Material 3 design is enabled in the theme.
+  void verifyMaterial3Enabled() {
+    final materialApp = widget<MaterialApp>(find.byType(MaterialApp));
+    expect(materialApp.theme?.useMaterial3, isTrue,
+        reason: 'Material 3 should be enabled');
+  }
+
+  /// Verifies that the debug banner is disabled.
+  void verifyDebugBannerDisabled() {
+    final materialApp = widget<MaterialApp>(find.byType(MaterialApp));
+    expect(materialApp.debugShowCheckedModeBanner, isFalse,
+        reason: 'Debug banner should be disabled');
+  }
+
+  /// Verifies that the app has a valid theme configuration.
+  void verifyThemeConfigured() {
+    final materialApp = widget<MaterialApp>(find.byType(MaterialApp));
+    expect(materialApp.theme, isNotNull, reason: 'Theme should be configured');
+    expect(materialApp.theme!.colorScheme, isNotNull,
+        reason: 'Color scheme should be configured');
+  }
+
+  /// Verifies the app uses dark theme.
+  void verifyDarkTheme() {
+    final materialApp = widget<MaterialApp>(find.byType(MaterialApp));
+    expect(materialApp.theme?.colorScheme.brightness, equals(Brightness.dark),
+        reason: 'App should use dark theme');
+  }
+
+  /// Verifies the app uses light theme.
+  void verifyLightTheme() {
+    final materialApp = widget<MaterialApp>(find.byType(MaterialApp));
+    expect(materialApp.theme?.colorScheme.brightness, equals(Brightness.light),
+        reason: 'App should use light theme');
+  }
+
+  /// Verifies that the app launched successfully with all required widgets.
+  ///
+  /// Checks for the presence of MaterialApp and Scaffold widgets.
+  void verifyAppLaunchedSuccessfully() {
+    expect(find.byType(MaterialApp), findsOneWidget,
+        reason: 'MaterialApp should be present');
+    expect(find.byType(Scaffold), findsAtLeast(1),
+        reason: 'At least one Scaffold should be present');
+  }
+
+  /// Verifies that all calculator buttons are present.
+  ///
+  /// This indicates that the app fully initialized without resource errors.
+  void verifyCalculatorUIComplete() {
+    final requiredButtons = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    final requiredOperators = ['+', '-', '×', '÷', '=', 'C', '.'];
+
+    for (final button in requiredButtons) {
+      expect(find.text(button), findsWidgets,
+          reason: 'Button "$button" should be present');
+    }
+
+    for (final op in requiredOperators) {
+      expect(find.text(op), findsWidgets,
+          reason: 'Operator "$op" should be present');
+    }
+  }
+
+  /// Performs a complete branding verification.
+  ///
+  /// Checks MaterialApp presence, theme configuration, and debug banner status.
+  void verifyCompleteBranding({
+    String? expectedTitle,
+    bool expectMaterial3 = true,
+    bool expectDebugBannerDisabled = true,
+  }) {
+    verifyAppLaunchedSuccessfully();
+    verifyThemeConfigured();
+
+    if (expectedTitle != null) {
+      verifyAppTitle(expectedTitle);
+    }
+
+    if (expectMaterial3) {
+      verifyMaterial3Enabled();
+    }
+
+    if (expectDebugBannerDisabled) {
+      verifyDebugBannerDisabled();
+    }
+  }
+}

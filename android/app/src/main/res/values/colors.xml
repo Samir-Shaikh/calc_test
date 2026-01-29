@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Background color for adaptive icon -->
+    <!-- Using a blue color that matches the calculator app's primary theme -->
+    <color name="ic_launcher_background">#0157AB</color>
+</resources>
