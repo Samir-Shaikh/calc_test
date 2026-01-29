@@ -7,6 +7,7 @@ import 'package:android_calculator_flutter/features/calculator/domain/usecases/i
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/negate_value_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_state.dart';
+import 'package:android_calculator_flutter/features/calculator/presentation/widgets/backspace_button.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/calculator_button_grid.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/calculator_toast.dart';
 import 'package:flutter/material.dart';
@@ -402,6 +403,203 @@ class _CalculatorTestScreenWithToastState
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A calculator test app configured for RTL (Right-to-Left) layout testing.
+///
+/// This widget wraps the calculator app in a [Directionality] widget
+/// with [TextDirection.rtl] to simulate RTL locale environments like
+/// Arabic, Hebrew, or Persian.
+///
+/// Use this for integration tests that need to verify:
+/// - Button grid layout mirrors correctly in RTL mode
+/// - Backspace button moves to the logical end (left side in RTL)
+/// - Display alignment adapts to RTL context
+/// - All calculator operations work correctly in RTL layout
+///
+/// ## RTL Layout Behavior
+///
+/// In RTL mode:
+/// - The button grid is horizontally mirrored (e.g., C, (), ^, ÷ becomes ÷, ^, (), C)
+/// - The backspace button appears on the left side (logical end)
+/// - Text alignment uses directional values (TextAlign.end)
+/// - All calculations produce the same results as LTR mode
+///
+/// Usage:
+/// ```dart
+/// await tester.pumpWidget(const CalculatorTestAppRTL());
+/// await tester.pumpAndSettle();
+///
+/// // Verify RTL layout mirroring
+/// final clearX = tester.getCenter(find.text('C')).dx;
+/// final divideX = tester.getCenter(find.text('÷')).dx;
+/// expect(divideX, lessThan(clearX)); // In RTL, ÷ is on the left
+///
+/// // Calculations work the same
+/// await tester.tap(find.text('2'));
+/// await tester.tap(find.text('+'));
+/// await tester.tap(find.text('3'));
+/// await tester.tap(find.text('='));
+/// tester.verifyResult('5');
+/// ```
+class CalculatorTestAppRTL extends StatelessWidget {
+  const CalculatorTestAppRTL({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: MaterialApp(
+        title: 'Calculator Test (RTL)',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+        ),
+        // Wrap home in another Directionality to ensure RTL is propagated
+        builder: (context, child) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: child!,
+          );
+        },
+        home: const _CalculatorTestScreenRTL(),
+      ),
+    );
+  }
+}
+
+/// Internal calculator screen for RTL testing with full evaluation support.
+///
+/// This screen mirrors the structure of [_CalculatorTestScreen] but includes
+/// the backspace button positioned using [MainAxisAlignment.end] which
+/// correctly adapts to the RTL context.
+class _CalculatorTestScreenRTL extends StatefulWidget {
+  const _CalculatorTestScreenRTL();
+
+  @override
+  State<_CalculatorTestScreenRTL> createState() =>
+      _CalculatorTestScreenRTLState();
+}
+
+class _CalculatorTestScreenRTLState extends State<_CalculatorTestScreenRTL> {
+  late final InsertParenthesisUseCase _insertParenthesisUseCase;
+  late final InsertOperatorUseCase _insertOperatorUseCase;
+  late final EvaluateExpressionUseCase _evaluateExpressionUseCase;
+  late final ClearExpressionUseCase _clearExpressionUseCase;
+  late final DeleteCharacterUseCase _deleteCharacterUseCase;
+  late final NegateValueUseCase _negateValueUseCase;
+  late final ExpressionDisplayBloc _bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _insertParenthesisUseCase = InsertParenthesisUseCase();
+    _insertOperatorUseCase = InsertOperatorUseCase();
+    _evaluateExpressionUseCase = EvaluateExpressionUseCase();
+    _clearExpressionUseCase = ClearExpressionUseCase();
+    _deleteCharacterUseCase = DeleteCharacterUseCase();
+    _negateValueUseCase = NegateValueUseCase();
+    _bloc = ExpressionDisplayBloc(
+      insertParenthesisUseCase: _insertParenthesisUseCase,
+      insertOperatorUseCase: _insertOperatorUseCase,
+      evaluateExpressionUseCase: _evaluateExpressionUseCase,
+      clearExpressionUseCase: _clearExpressionUseCase,
+      deleteCharacterUseCase: _deleteCharacterUseCase,
+      negateValueUseCase: _negateValueUseCase,
+    );
+  }
+
+  @override
+  void dispose() {
+    _bloc.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<ExpressionDisplayBloc>.value(
+      value: _bloc,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Calculator'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
+        body: Column(
+          children: [
+            // Display area
+            Expanded(
+              flex: 1,
+              child: BlocBuilder<ExpressionDisplayBloc, ExpressionDisplayState>(
+                builder: (context, state) {
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      // Use CrossAxisAlignment.end for RTL-aware alignment
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          state.displayExpression,
+                          // Use TextAlign.end for RTL-aware text alignment
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          state.result ?? state.displayExpression,
+                          // Use TextAlign.end for RTL-aware text alignment
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            // Backspace button row - uses MainAxisAlignment.end for RTL support
+            const _BackspaceButtonRow(),
+            // Button area
+            const Expanded(
+              flex: 2,
+              child: CalculatorButtonGrid(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A row widget that positions the backspace button at the logical end.
+///
+/// Uses [MainAxisAlignment.end] to position the backspace button, which
+/// automatically adapts to RTL layout (button appears on the left in RTL).
+class _BackspaceButtonRow extends StatelessWidget {
+  const _BackspaceButtonRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Row(
+        // MainAxisAlignment.end places the button at the logical end
+        // In LTR: right side, In RTL: left side
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: const [
+          BackspaceButton(),
+        ],
       ),
     );
   }
