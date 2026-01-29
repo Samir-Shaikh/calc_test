@@ -18,6 +18,15 @@ class CalculatorButtonDecorations {
     shape: BoxShape.circle,
   );
 
+  /// Decoration for the power button.
+  ///
+  /// Features a circular shape with gray (#505050) background color
+  /// that provides visual distinction from other button types.
+  static BoxDecoration powerButton = BoxDecoration(
+    color: CalculatorColors.powerButtonBackground,
+    shape: BoxShape.circle,
+  );
+
   /// Creates a custom circular button decoration with the specified color.
   ///
   /// Use this factory method when you need a circular button with

@@ -13,6 +13,12 @@ class CalculatorColors {
   /// button while maintaining good contrast with white text.
   static const Color parenthesisButtonBackground = Color(0xFF505050);
 
+  /// Background color for the power button (#505050).
+  ///
+  /// A gray color that provides visual distinction for the power
+  /// button while maintaining good contrast with white text.
+  static const Color powerButtonBackground = Color(0xFF505050);
+
   /// Text color for buttons with dark backgrounds.
   ///
   /// White color to ensure readability on dark button backgrounds
