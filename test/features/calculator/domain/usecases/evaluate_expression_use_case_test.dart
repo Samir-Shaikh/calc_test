@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:samplecalc/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 
 void main() {
   late EvaluateExpressionUseCase useCase;
@@ -131,7 +131,8 @@ void main() {
 
     group('parentheses evaluation', () {
       group('basic parentheses', () {
-        test('evaluates (2+3)*4 = 20', () {
+        test('AC3: evaluates (2+3)*4 = 20', () {
+          // This is the specific AC3 acceptance criteria test
           expect(useCase.execute('(2+3)*4'), equals('20'));
         });
 
@@ -186,6 +187,11 @@ void main() {
           // 3 * 7 = 21, 21 * 2 = 42
           expect(useCase.execute('((1+2)*(3+4))*(5-3)'), equals('42'));
         });
+
+        test('evaluates ((2+3)*2)+1 = 11 (nested parentheses per implementation step 3)', () {
+          // (2+3) = 5, 5*2 = 10, 10+1 = 11
+          expect(useCase.execute('((2+3)*2)+1'), equals('11'));
+        });
       });
 
       group('multiple separate parentheses', () {
@@ -197,12 +203,40 @@ void main() {
           expect(useCase.execute('(2+3)*(4+5)'), equals('45'));
         });
 
+        test('evaluates (2+3)*(4+1) = 25 (multiple groups per implementation step 4)', () {
+          // (2+3) = 5, (4+1) = 5
+          // 5 * 5 = 25
+          expect(useCase.execute('(2+3)*(4+1)'), equals('25'));
+        });
+
         test('evaluates (10-2)/(2+2) = 2', () {
           expect(useCase.execute('(10-2)/(2+2)'), equals('2'));
         });
 
         test('evaluates (3*2)-(2*1) = 4', () {
           expect(useCase.execute('(3*2)-(2*1)'), equals('4'));
+        });
+      });
+
+      group('order of operations verification (implementation step 5)', () {
+        test('without parentheses: 2+3*4 = 14 (multiplication first)', () {
+          // Standard precedence: 3*4 = 12, then 2+12 = 14
+          expect(useCase.execute('2+3*4'), equals('14'));
+        });
+
+        test('with parentheses: (2+3)*4 = 20 (parentheses override precedence)', () {
+          // Parentheses force: 2+3 = 5, then 5*4 = 20
+          expect(useCase.execute('(2+3)*4'), equals('20'));
+        });
+
+        test('demonstrates parentheses change result from 14 to 20', () {
+          // This test explicitly shows how parentheses change the order of operations
+          final withoutParens = useCase.execute('2+3*4');
+          final withParens = useCase.execute('(2+3)*4');
+          
+          expect(withoutParens, equals('14'), reason: '2+3*4 should be 14 (multiplication first)');
+          expect(withParens, equals('20'), reason: '(2+3)*4 should be 20 (parentheses first)');
+          expect(withoutParens, isNot(equals(withParens)), reason: 'Results should differ');
         });
       });
 
@@ -263,12 +297,12 @@ void main() {
       });
     });
 
-    group('malformed parentheses - error handling', () {
-      test('unmatched opening parenthesis returns Error', () {
+    group('malformed parentheses - error handling (implementation step 6)', () {
+      test('unmatched opening parenthesis returns Error: (2+3', () {
         expect(useCase.execute('(2+3'), equals('Error'));
       });
 
-      test('unmatched closing parenthesis returns Error', () {
+      test('unmatched closing parenthesis returns Error: 2+3)', () {
         expect(useCase.execute('2+3)'), equals('Error'));
       });
 

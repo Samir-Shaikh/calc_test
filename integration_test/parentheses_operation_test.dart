@@ -104,7 +104,7 @@ void main() {
       expect(find.text('(2+3)×4'), findsOneWidget);
     });
 
-    testWidgets('evaluating (2+3)*4 equals 20',
+    testWidgets('AC3: evaluating (2+3)*4 equals 20',
         (WidgetTester tester) async {
       // Build the test calculator app
       await tester.pumpWidget(const _TestCalculatorApp());
@@ -136,7 +136,7 @@ void main() {
       await tester.tap(find.text('='));
       await tester.pumpAndSettle();
 
-      // Verify result is displayed
+      // Verify result is displayed - AC3 requirement: (2+3)*4 = 20
       expect(find.text('20'), findsOneWidget);
     });
 
@@ -398,6 +398,57 @@ void main() {
 
       // Verify result with parentheses: (2+3)*4 = 20
       expect(find.text('20'), findsOneWidget);
+    });
+
+    testWidgets('multiple parentheses groups: (2+3)*(4+1) equals 25',
+        (WidgetTester tester) async {
+      // Build the test calculator app
+      await tester.pumpWidget(const _TestCalculatorApp());
+      await tester.pumpAndSettle();
+
+      // Build: ( 2 + 3 ) * ( 4 + 1 ) =
+      // First group: (2+3)
+      await tester.tap(find.byKey(const Key('parenthesis_button'))); // (
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('2'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('3'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('parenthesis_button'))); // )
+      await tester.pumpAndSettle();
+
+      // Operator between groups
+      await tester.tap(find.text('×'));
+      await tester.pumpAndSettle();
+
+      // Second group: (4+1)
+      await tester.tap(find.byKey(const Key('parenthesis_button'))); // (
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('4'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('parenthesis_button'))); // )
+      await tester.pumpAndSettle();
+
+      // Evaluate
+      await tester.tap(find.text('='));
+      await tester.pumpAndSettle();
+
+      // Verify result: (2+3)*(4+1) = 5*5 = 25
+      expect(find.text('25'), findsOneWidget);
     });
   });
 }
