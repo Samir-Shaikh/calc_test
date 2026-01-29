@@ -5,3 +5,4 @@
 
 export 'expression.dart';
 export 'result_formatter.dart';
+export 'validation_result.dart';

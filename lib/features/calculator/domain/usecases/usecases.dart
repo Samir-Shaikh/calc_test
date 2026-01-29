@@ -6,3 +6,4 @@
 export 'evaluate_expression_use_case.dart';
 export 'insert_operator_use_case.dart';
 export 'insert_parenthesis_use_case.dart';
+export 'validate_expression_use_case.dart';
