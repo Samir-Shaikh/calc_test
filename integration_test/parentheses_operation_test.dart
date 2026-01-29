@@ -7,6 +7,8 @@ import 'package:android_calculator_flutter/features/calculator/domain/usecases/c
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/delete_character_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/negate_value_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_state.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/calculator_button_grid.dart';
@@ -487,6 +489,8 @@ class _TestCalculatorScreenState extends State<_TestCalculatorScreen> {
   late final InsertOperatorUseCase _insertOperatorUseCase;
   late final EvaluateExpressionUseCase _evaluateExpressionUseCase;
   late final ClearExpressionUseCase _clearExpressionUseCase;
+  late final DeleteCharacterUseCase _deleteCharacterUseCase;
+  late final NegateValueUseCase _negateValueUseCase;
   late final ExpressionDisplayBloc _bloc;
 
   @override
@@ -496,11 +500,15 @@ class _TestCalculatorScreenState extends State<_TestCalculatorScreen> {
     _insertOperatorUseCase = InsertOperatorUseCase();
     _evaluateExpressionUseCase = EvaluateExpressionUseCase();
     _clearExpressionUseCase = ClearExpressionUseCase();
+    _deleteCharacterUseCase = DeleteCharacterUseCase();
+    _negateValueUseCase = NegateValueUseCase();
     _bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: _insertParenthesisUseCase,
       insertOperatorUseCase: _insertOperatorUseCase,
       evaluateExpressionUseCase: _evaluateExpressionUseCase,
       clearExpressionUseCase: _clearExpressionUseCase,
+      deleteCharacterUseCase: _deleteCharacterUseCase,
+      negateValueUseCase: _negateValueUseCase,
     );
   }
 

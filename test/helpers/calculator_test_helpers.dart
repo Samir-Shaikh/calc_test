@@ -4,6 +4,7 @@ import 'package:android_calculator_flutter/features/calculator/domain/usecases/d
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/negate_value_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
 
 /// Mock implementation of [ClearExpressionUseCase] for testing.
@@ -20,6 +21,7 @@ import 'package:android_calculator_flutter/features/calculator/presentation/bloc
 ///   evaluateExpressionUseCase: EvaluateExpressionUseCase(),
 ///   clearExpressionUseCase: mockClearUseCase,
 ///   deleteCharacterUseCase: DeleteCharacterUseCase(),
+///   negateValueUseCase: NegateValueUseCase(),
 /// );
 /// ```
 class MockClearExpressionUseCase extends ClearExpressionUseCase {
@@ -154,6 +156,30 @@ class MockDeleteCharacterUseCase extends DeleteCharacterUseCase {
   }
 }
 
+/// Mock implementation of [NegateValueUseCase] for testing.
+///
+/// This mock allows tests to track calls to the negate value operation.
+class MockNegateValueUseCase extends NegateValueUseCase {
+  /// Counter to track how many times [execute] has been called.
+  int executeCallCount = 0;
+
+  /// The last expression that was passed to [execute].
+  Expression? lastExpression;
+
+  @override
+  Expression execute(Expression expression) {
+    executeCallCount++;
+    lastExpression = expression;
+    return super.execute(expression);
+  }
+
+  /// Resets the mock state.
+  void reset() {
+    executeCallCount = 0;
+    lastExpression = null;
+  }
+}
+
 /// Creates an [ExpressionDisplayBloc] with default use cases for testing.
 ///
 /// This helper function simplifies test setup by creating a BLoC
@@ -170,6 +196,7 @@ ExpressionDisplayBloc createTestBloc({
   EvaluateExpressionUseCase? evaluateExpressionUseCase,
   ClearExpressionUseCase? clearExpressionUseCase,
   DeleteCharacterUseCase? deleteCharacterUseCase,
+  NegateValueUseCase? negateValueUseCase,
 }) {
   return ExpressionDisplayBloc(
     insertParenthesisUseCase:
@@ -179,6 +206,7 @@ ExpressionDisplayBloc createTestBloc({
         evaluateExpressionUseCase ?? EvaluateExpressionUseCase(),
     clearExpressionUseCase: clearExpressionUseCase ?? ClearExpressionUseCase(),
     deleteCharacterUseCase: deleteCharacterUseCase ?? DeleteCharacterUseCase(),
+    negateValueUseCase: negateValueUseCase ?? NegateValueUseCase(),
   );
 }
 
@@ -202,12 +230,14 @@ ExpressionDisplayBloc createTestBloc({
   MockEvaluateExpressionUseCase evaluateExpressionUseCase,
   MockClearExpressionUseCase clearExpressionUseCase,
   MockDeleteCharacterUseCase deleteCharacterUseCase,
+  MockNegateValueUseCase negateValueUseCase,
 }) createTestBlocWithMocks() {
   final insertParenthesisUseCase = MockInsertParenthesisUseCase();
   final insertOperatorUseCase = MockInsertOperatorUseCase();
   final evaluateExpressionUseCase = MockEvaluateExpressionUseCase();
   final clearExpressionUseCase = MockClearExpressionUseCase();
   final deleteCharacterUseCase = MockDeleteCharacterUseCase();
+  final negateValueUseCase = MockNegateValueUseCase();
 
   final bloc = ExpressionDisplayBloc(
     insertParenthesisUseCase: insertParenthesisUseCase,
@@ -215,6 +245,7 @@ ExpressionDisplayBloc createTestBloc({
     evaluateExpressionUseCase: evaluateExpressionUseCase,
     clearExpressionUseCase: clearExpressionUseCase,
     deleteCharacterUseCase: deleteCharacterUseCase,
+    negateValueUseCase: negateValueUseCase,
   );
 
   return (
@@ -224,5 +255,6 @@ ExpressionDisplayBloc createTestBloc({
     evaluateExpressionUseCase: evaluateExpressionUseCase,
     clearExpressionUseCase: clearExpressionUseCase,
     deleteCharacterUseCase: deleteCharacterUseCase,
+    negateValueUseCase: negateValueUseCase,
   );
 }

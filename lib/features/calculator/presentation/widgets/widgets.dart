@@ -6,6 +6,7 @@ library;
 
 export 'backspace_button.dart';
 export 'backspace_button_config.dart';
+export 'calculator_button.dart';
 export 'calculator_button_grid.dart';
 export 'calculator_toast.dart';
 export 'clear_button_config.dart';

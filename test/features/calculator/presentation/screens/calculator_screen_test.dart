@@ -6,10 +6,15 @@ import 'package:android_calculator_flutter/features/calculator/domain/usecases/d
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/negate_value_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_state.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/screens/calculator_screen.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/theme/calculator_colors.dart';
+import 'package:android_calculator_flutter/features/calculator/presentation/theme/calculator_dimensions.dart';
+import 'package:android_calculator_flutter/features/calculator/presentation/widgets/backspace_button.dart';
+import 'package:android_calculator_flutter/features/calculator/presentation/widgets/backspace_button_config.dart';
+import 'package:android_calculator_flutter/features/calculator/presentation/widgets/calculator_button_grid.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/operator_button_config.dart';
 
 void main() {
@@ -18,6 +23,7 @@ void main() {
   late EvaluateExpressionUseCase evaluateExpressionUseCase;
   late ClearExpressionUseCase clearExpressionUseCase;
   late DeleteCharacterUseCase deleteCharacterUseCase;
+  late NegateValueUseCase negateValueUseCase;
   late ExpressionDisplayBloc bloc;
 
   setUp(() {
@@ -26,12 +32,14 @@ void main() {
     evaluateExpressionUseCase = EvaluateExpressionUseCase();
     clearExpressionUseCase = ClearExpressionUseCase();
     deleteCharacterUseCase = DeleteCharacterUseCase();
+    negateValueUseCase = NegateValueUseCase();
     bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: insertParenthesisUseCase,
       insertOperatorUseCase: insertOperatorUseCase,
       evaluateExpressionUseCase: evaluateExpressionUseCase,
       clearExpressionUseCase: clearExpressionUseCase,
       deleteCharacterUseCase: deleteCharacterUseCase,
+      negateValueUseCase: negateValueUseCase,
     );
   });
 
@@ -596,7 +604,7 @@ void main() {
       await tester.tap(find.text('2'));
       await tester.pump();
       
-      await tester.tap(find.text('⌫'));
+      await tester.tap(find.byType(BackspaceButton));
       await tester.pump();
 
       expect(bloc.state.expression.value, equals('1'));
@@ -639,6 +647,230 @@ void main() {
         find.byType(BlocListener<ExpressionDisplayBloc, ExpressionDisplayState>), 
         findsAtLeastNWidgets(1),
       );
+    });
+  });
+
+  group('Backspace Button Positioning', () {
+    testWidgets('backspace button is present in calculator screen',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.byType(BackspaceButton), findsOneWidget);
+    });
+
+    testWidgets('backspace button displays delete icon',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Verify the backspace icon is displayed
+      expect(find.byIcon(Icons.backspace_outlined), findsOneWidget);
+    });
+
+    testWidgets('backspace button is positioned above the button grid',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Get positions of backspace button and button grid
+      final backspaceButtonFinder = find.byType(BackspaceButton);
+      final buttonGridFinder = find.byType(CalculatorButtonGrid);
+
+      expect(backspaceButtonFinder, findsOneWidget);
+      expect(buttonGridFinder, findsOneWidget);
+
+      // Get the render boxes to compare positions
+      final backspaceBox = tester.getRect(backspaceButtonFinder);
+      final buttonGridBox = tester.getRect(buttonGridFinder);
+
+      // Backspace button should be above the button grid (lower Y value)
+      expect(backspaceBox.bottom, lessThanOrEqualTo(buttonGridBox.top + 20));
+    });
+
+    testWidgets('backspace button is right-aligned',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final backspaceButtonFinder = find.byType(BackspaceButton);
+      expect(backspaceButtonFinder, findsOneWidget);
+
+      // Get the screen width and backspace button position
+      final screenSize = tester.view.physicalSize / tester.view.devicePixelRatio;
+      final backspaceBox = tester.getRect(backspaceButtonFinder);
+
+      // Backspace button should be on the right side of the screen
+      // (its center should be in the right half)
+      expect(backspaceBox.center.dx, greaterThan(screenSize.width / 2));
+    });
+
+    testWidgets('backspace button row uses correct horizontal padding',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Find the Padding widgets that wrap the backspace button
+      final backspaceButtonFinder = find.byType(BackspaceButton);
+      expect(backspaceButtonFinder, findsOneWidget);
+
+      // Find ancestor Padding widgets
+      final paddingFinders = find.ancestor(
+        of: backspaceButtonFinder,
+        matching: find.byType(Padding),
+      );
+
+      // There should be padding widgets wrapping the backspace button
+      expect(paddingFinders, findsAtLeastNWidgets(1));
+
+      // Verify one of the padding widgets uses the expected horizontal padding
+      bool foundCorrectPadding = false;
+      for (final paddingElement in tester.widgetList<Padding>(paddingFinders)) {
+        final edgeInsets = paddingElement.padding as EdgeInsets?;
+        if (edgeInsets != null) {
+          if (edgeInsets.left == CalculatorDimensions.backspaceRowHorizontalPadding ||
+              edgeInsets.right == CalculatorDimensions.backspaceRowHorizontalPadding) {
+            foundCorrectPadding = true;
+            break;
+          }
+        }
+      }
+      expect(foundCorrectPadding, isTrue,
+          reason: 'Expected to find padding with backspaceRowHorizontalPadding');
+    });
+
+    testWidgets('backspace button has correct styling from config',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final backspaceButtonFinder = find.byType(BackspaceButton);
+      expect(backspaceButtonFinder, findsOneWidget);
+
+      // Find the Container inside the BackspaceButton
+      final container = tester.widget<Container>(
+        find.descendant(
+          of: backspaceButtonFinder,
+          matching: find.byType(Container),
+        ).first,
+      );
+
+      final decoration = container.decoration as BoxDecoration;
+
+      // Verify styling matches BackspaceButtonConfig
+      expect(decoration.color, equals(CalculatorColors.backspaceButtonBackground));
+      expect(decoration.shape, equals(BoxShape.circle));
+    });
+
+    testWidgets('backspace button has correct size',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final backspaceButtonFinder = find.byType(BackspaceButton);
+      final backspaceBox = tester.getRect(backspaceButtonFinder);
+
+      // Verify the button has the correct size (using closeTo to handle floating point precision)
+      expect(backspaceBox.width, closeTo(CalculatorDimensions.backspaceButtonSize, 0.1));
+      expect(backspaceBox.height, closeTo(CalculatorDimensions.backspaceButtonSize, 0.1));
+    });
+
+    testWidgets('backspace button icon has correct color',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final iconWidget = tester.widget<Icon>(
+        find.byIcon(Icons.backspace_outlined),
+      );
+
+      // Verify icon color is white for good contrast
+      expect(iconWidget.color, equals(Colors.white));
+      expect(iconWidget.color, equals(BackspaceButtonConfig.iconColor));
+    });
+
+    testWidgets('backspace button has accessibility semantic label',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final iconWidget = tester.widget<Icon>(
+        find.byIcon(Icons.backspace_outlined),
+      );
+
+      // Verify semantic label for accessibility
+      expect(iconWidget.semanticLabel, equals('Backspace'));
+      expect(iconWidget.semanticLabel, equals(BackspaceButtonConfig.semanticLabel));
+    });
+
+    testWidgets('backspace button is functional and deletes last character',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Enter some digits
+      await tester.tap(find.text('5'));
+      await tester.pump();
+      await tester.tap(find.text('6'));
+      await tester.pump();
+      await tester.tap(find.text('7'));
+      await tester.pump();
+
+      expect(bloc.state.expression.value, equals('567'));
+
+      // Tap backspace button
+      await tester.tap(find.byType(BackspaceButton));
+      await tester.pump();
+
+      // Verify last character was deleted
+      expect(bloc.state.expression.value, equals('56'));
+    });
+
+    testWidgets('backspace button is contained in a Row with end alignment',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final backspaceButtonFinder = find.byType(BackspaceButton);
+
+      // Find the parent Row
+      final rowFinder = find.ancestor(
+        of: backspaceButtonFinder,
+        matching: find.byType(Row),
+      );
+
+      expect(rowFinder, findsAtLeastNWidgets(1));
+
+      // Check if one of the rows has end alignment
+      bool hasEndAlignment = false;
+      for (final rowWidget in tester.widgetList<Row>(rowFinder)) {
+        if (rowWidget.mainAxisAlignment == MainAxisAlignment.end) {
+          hasEndAlignment = true;
+          break;
+        }
+      }
+
+      expect(hasEndAlignment, isTrue,
+          reason: 'Expected BackspaceButton to be in a Row with MainAxisAlignment.end');
+    });
+
+    testWidgets('tapping backspace multiple times deletes multiple characters',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Enter expression
+      await tester.tap(find.text('1'));
+      await tester.pump();
+      await tester.tap(find.text('2'));
+      await tester.pump();
+      await tester.tap(find.text('3'));
+      await tester.pump();
+      await tester.tap(find.text('+'));
+      await tester.pump();
+      await tester.tap(find.text('4'));
+      await tester.pump();
+
+      expect(bloc.state.expression.value, equals('123+4'));
+
+      // Tap backspace three times
+      await tester.tap(find.byType(BackspaceButton));
+      await tester.pump();
+      await tester.tap(find.byType(BackspaceButton));
+      await tester.pump();
+      await tester.tap(find.byType(BackspaceButton));
+      await tester.pump();
+
+      // Should have deleted '4', '+', and '3'
+      expect(bloc.state.expression.value, equals('12'));
     });
   });
 }

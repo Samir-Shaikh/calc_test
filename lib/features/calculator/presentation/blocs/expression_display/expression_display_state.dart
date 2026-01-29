@@ -20,11 +20,26 @@ class ExpressionDisplayState {
   /// Error message if [hasError] is true.
   final String? errorMessage;
 
+  /// Whether this is an evaluation error that should trigger a toast notification.
+  /// 
+  /// This is distinct from [hasError] because some errors (like division by zero)
+  /// may be displayed in the result area rather than as toast notifications.
+  /// Set to true when the expression evaluation fails due to invalid input.
+  final bool isEvaluationError;
+
+  /// The evaluation error message to display in a toast notification.
+  /// 
+  /// This is set when [isEvaluationError] is true and contains a user-friendly
+  /// message explaining why the evaluation failed.
+  final String? evaluationError;
+
   const ExpressionDisplayState({
     required this.expression,
     this.result,
     this.hasError = false,
     this.errorMessage,
+    this.isEvaluationError = false,
+    this.evaluationError,
   });
 
   /// Creates the initial state with an empty expression.
@@ -35,17 +50,29 @@ class ExpressionDisplayState {
   }
 
   /// Creates a copy of this state with the given fields replaced.
+  /// 
+  /// Note: To explicitly set nullable fields to null, use the `clearX` parameters:
+  /// - [clearResult]: Set to true to clear the result
+  /// - [clearErrorMessage]: Set to true to clear the error message
+  /// - [clearEvaluationError]: Set to true to clear the evaluation error
   ExpressionDisplayState copyWith({
     Expression? expression,
     String? result,
     bool? hasError,
     String? errorMessage,
+    bool? isEvaluationError,
+    String? evaluationError,
+    bool clearResult = false,
+    bool clearErrorMessage = false,
+    bool clearEvaluationError = false,
   }) {
     return ExpressionDisplayState(
       expression: expression ?? this.expression,
-      result: result ?? this.result,
+      result: clearResult ? null : (result ?? this.result),
       hasError: hasError ?? this.hasError,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+      isEvaluationError: isEvaluationError ?? this.isEvaluationError,
+      evaluationError: clearEvaluationError ? null : (evaluationError ?? this.evaluationError),
     );
   }
 
@@ -59,7 +86,9 @@ class ExpressionDisplayState {
         other.expression == expression &&
         other.result == result &&
         other.hasError == hasError &&
-        other.errorMessage == errorMessage;
+        other.errorMessage == errorMessage &&
+        other.isEvaluationError == isEvaluationError &&
+        other.evaluationError == evaluationError;
   }
 
   @override
@@ -67,9 +96,11 @@ class ExpressionDisplayState {
       expression.hashCode ^
       result.hashCode ^
       hasError.hashCode ^
-      errorMessage.hashCode;
+      errorMessage.hashCode ^
+      isEvaluationError.hashCode ^
+      evaluationError.hashCode;
 
   @override
   String toString() =>
-      'ExpressionDisplayState(expression: $expression, result: $result, hasError: $hasError, errorMessage: $errorMessage)';
+      'ExpressionDisplayState(expression: $expression, result: $result, hasError: $hasError, errorMessage: $errorMessage, isEvaluationError: $isEvaluationError, evaluationError: $evaluationError)';
 }

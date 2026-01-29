@@ -5,6 +5,7 @@ import '../../../domain/usecases/delete_character_use_case.dart';
 import '../../../domain/usecases/evaluate_expression_use_case.dart';
 import '../../../domain/usecases/insert_operator_use_case.dart';
 import '../../../domain/usecases/insert_parenthesis_use_case.dart';
+import '../../../domain/usecases/negate_value_use_case.dart';
 import 'expression_display_event.dart';
 import 'expression_display_state.dart';
 
@@ -30,6 +31,9 @@ class ExpressionDisplayBloc
   /// Use case for deleting characters at the cursor position (backspace).
   final DeleteCharacterUseCase _deleteCharacterUseCase;
 
+  /// Use case for toggling the sign of the current number (+/-).
+  final NegateValueUseCase _negateValueUseCase;
+
   /// Creates an ExpressionDisplayBloc with the required use cases.
   ///
   /// The [insertParenthesisUseCase] handles the toggle logic for
@@ -38,17 +42,20 @@ class ExpressionDisplayBloc
   /// The [evaluateExpressionUseCase] handles expression evaluation.
   /// The [clearExpressionUseCase] handles clearing the expression and resetting state.
   /// The [deleteCharacterUseCase] handles deleting characters at the cursor position.
+  /// The [negateValueUseCase] handles toggling the sign of the current number.
   ExpressionDisplayBloc({
     required InsertParenthesisUseCase insertParenthesisUseCase,
     required InsertOperatorUseCase insertOperatorUseCase,
     required EvaluateExpressionUseCase evaluateExpressionUseCase,
     required ClearExpressionUseCase clearExpressionUseCase,
     required DeleteCharacterUseCase deleteCharacterUseCase,
+    required NegateValueUseCase negateValueUseCase,
   })  : _insertParenthesisUseCase = insertParenthesisUseCase,
         _insertOperatorUseCase = insertOperatorUseCase,
         _evaluateExpressionUseCase = evaluateExpressionUseCase,
         _clearExpressionUseCase = clearExpressionUseCase,
         _deleteCharacterUseCase = deleteCharacterUseCase,
+        _negateValueUseCase = negateValueUseCase,
         super(ExpressionDisplayState.initial()) {
     on<NumericPressed>(_onNumericPressed);
     on<OperatorPressed>(_onOperatorPressed);
@@ -58,6 +65,7 @@ class ExpressionDisplayBloc
     on<ClearPressed>(_onClearPressed);
     on<BackspacePressed>(_onBackspacePressed);
     on<EqualsPressed>(_onEqualsPressed);
+    on<NegatePressed>(_onNegatePressed);
   }
 
   /// Handles numeric digit presses.
@@ -257,5 +265,28 @@ class ExpressionDisplayBloc
           evaluationError: null,
         ));
     }
+  }
+
+  /// Handles negate/plus-minus button presses.
+  ///
+  /// Uses the NegateValueUseCase to toggle the sign of the current number
+  /// at the cursor position. This handles:
+  /// - Empty expression: Inserts a minus sign to start a negative number
+  /// - Positive number: Inserts a minus sign to make it negative
+  /// - Negative number: Removes the minus sign to make it positive
+  /// Clears any evaluation error state from previous operations.
+  void _onNegatePressed(
+    NegatePressed event,
+    Emitter<ExpressionDisplayState> emit,
+  ) {
+    final newExpression = _negateValueUseCase.execute(state.expression);
+    emit(ExpressionDisplayState(
+      expression: newExpression,
+      result: null,
+      hasError: false,
+      errorMessage: null,
+      isEvaluationError: false,
+      evaluationError: null,
+    ));
   }
 }

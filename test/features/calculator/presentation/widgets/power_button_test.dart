@@ -6,6 +6,7 @@ import 'package:android_calculator_flutter/features/calculator/domain/usecases/d
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/negate_value_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_event.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/theme/calculator_button_decorations.dart';
@@ -19,6 +20,7 @@ void main() {
   late EvaluateExpressionUseCase evaluateExpressionUseCase;
   late ClearExpressionUseCase clearExpressionUseCase;
   late DeleteCharacterUseCase deleteCharacterUseCase;
+  late NegateValueUseCase negateValueUseCase;
   late ExpressionDisplayBloc bloc;
 
   setUp(() {
@@ -27,12 +29,14 @@ void main() {
     evaluateExpressionUseCase = EvaluateExpressionUseCase();
     clearExpressionUseCase = ClearExpressionUseCase();
     deleteCharacterUseCase = DeleteCharacterUseCase();
+    negateValueUseCase = NegateValueUseCase();
     bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: insertParenthesisUseCase,
       insertOperatorUseCase: insertOperatorUseCase,
       evaluateExpressionUseCase: evaluateExpressionUseCase,
       clearExpressionUseCase: clearExpressionUseCase,
       deleteCharacterUseCase: deleteCharacterUseCase,
+      negateValueUseCase: negateValueUseCase,
     );
   });
 
@@ -309,15 +313,25 @@ void main() {
         expect(find.text('^'), findsOneWidget);
       });
 
-      testWidgets('power button is in the same row as 0, decimal, backspace, and equals', (WidgetTester tester) async {
+      testWidgets('power button is in Row 1 with C, (), and ÷', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget());
 
-        // Verify other buttons in the same row exist
-        expect(find.text('0'), findsOneWidget);
-        expect(find.text('.'), findsOneWidget);
-        expect(find.text('⌫'), findsOneWidget);
-        expect(find.text('='), findsOneWidget);
+        // Verify other buttons in Row 1 exist
+        expect(find.text('C'), findsOneWidget);
+        expect(find.text('()'), findsOneWidget);
         expect(find.text('^'), findsOneWidget);
+        expect(find.text('÷'), findsOneWidget);
+
+        // Verify they are in the same row (same Y position)
+        final clearY = tester.getCenter(find.text('C')).dy;
+        final parenthesisY = tester.getCenter(find.text('()')).dy;
+        final powerY = tester.getCenter(find.text('^')).dy;
+        final divideY = tester.getCenter(find.text('÷')).dy;
+
+        const tolerance = 5.0;
+        expect((clearY - parenthesisY).abs(), lessThan(tolerance));
+        expect((parenthesisY - powerY).abs(), lessThan(tolerance));
+        expect((powerY - divideY).abs(), lessThan(tolerance));
       });
 
       testWidgets('power button has same gray color as parenthesis button', (WidgetTester tester) async {
@@ -430,7 +444,7 @@ void main() {
         expect(bloc.state.expression.value, isEmpty);
       });
 
-      testWidgets('backspace removes power operator', (WidgetTester tester) async {
+      testWidgets('power operator can be removed by clear button', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget());
 
         // Build expression: 2^
@@ -441,10 +455,10 @@ void main() {
         await tester.pump();
         expect(bloc.state.expression.value, equals('2^'));
 
-        // Backspace should remove the ^
-        await tester.tap(find.text('⌫'));
+        // Clear should reset the expression
+        await tester.tap(find.text('C'));
         await tester.pump();
-        expect(bloc.state.expression.value, equals('2'));
+        expect(bloc.state.expression.value, isEmpty);
       });
     });
   });

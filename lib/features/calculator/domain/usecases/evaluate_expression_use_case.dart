@@ -1,60 +1,266 @@
 import 'dart:math' as math;
 
+import 'validate_expression_use_case.dart';
+import '../entities/validation_result.dart';
+
+/// Represents the result of an expression evaluation.
+/// 
+/// This sealed class provides type-safe handling of evaluation outcomes,
+/// allowing consumers to exhaustively handle success, invalid input,
+/// and division by zero cases.
+sealed class EvaluationResult {
+  const EvaluationResult();
+  
+  /// Returns true if the evaluation was successful.
+  bool get isSuccess;
+  
+  /// Returns the error message if evaluation failed, null otherwise.
+  String? get errorMessage;
+}
+
+/// Represents a successful evaluation result.
+/// 
+/// Contains the computed value as a double, which can be formatted
+/// for display purposes.
+class EvaluationSuccess extends EvaluationResult {
+  /// The computed result value.
+  final double value;
+  
+  const EvaluationSuccess(this.value);
+  
+  @override
+  bool get isSuccess => true;
+  
+  @override
+  String? get errorMessage => null;
+  
+  /// Returns the result formatted as a display string.
+  /// 
+  /// - Whole numbers are displayed without decimal places
+  /// - Infinity and NaN are displayed as strings
+  String get formattedValue {
+    if (value.isInfinite) {
+      return value.isNegative ? '-Infinity' : 'Infinity';
+    }
+    if (value.isNaN) {
+      return 'NaN';
+    }
+    
+    // Remove trailing zeros for whole numbers
+    if (value == value.truncateToDouble()) {
+      return value.toInt().toString();
+    }
+    return value.toString();
+  }
+  
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is EvaluationSuccess && other.value == value;
+  }
+  
+  @override
+  int get hashCode => value.hashCode;
+  
+  @override
+  String toString() => 'EvaluationSuccess($value)';
+}
+
+/// Represents an invalid input evaluation result.
+/// 
+/// This indicates that the expression could not be evaluated due to
+/// invalid syntax, malformed expressions, or other input errors.
+class EvaluationInvalidInput extends EvaluationResult {
+  /// The error message describing why the input is invalid.
+  final String message;
+  
+  const EvaluationInvalidInput(this.message);
+  
+  @override
+  bool get isSuccess => false;
+  
+  @override
+  String? get errorMessage => message;
+  
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is EvaluationInvalidInput && other.message == message;
+  }
+  
+  @override
+  int get hashCode => message.hashCode;
+  
+  @override
+  String toString() => 'EvaluationInvalidInput($message)';
+}
+
+/// Represents a division by zero evaluation result.
+/// 
+/// This is a special case that may be handled differently from other
+/// errors, such as showing a specific toast message or warning.
+class EvaluationDivisionByZero extends EvaluationResult {
+  /// Whether the result is positive infinity (true) or negative infinity (false).
+  /// Null indicates the result is NaN (0/0 case).
+  final bool? isPositive;
+  
+  const EvaluationDivisionByZero({this.isPositive});
+  
+  @override
+  bool get isSuccess => false;
+  
+  @override
+  String? get errorMessage => 'Division by zero';
+  
+  /// Returns the display string for the division by zero result.
+  String get displayValue {
+    if (isPositive == null) {
+      return 'NaN';
+    }
+    return isPositive! ? 'Infinity' : '-Infinity';
+  }
+  
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is EvaluationDivisionByZero && other.isPositive == isPositive;
+  }
+  
+  @override
+  int get hashCode => isPositive.hashCode;
+  
+  @override
+  String toString() => 'EvaluationDivisionByZero(isPositive: $isPositive)';
+}
+
 /// Use case for evaluating mathematical expressions.
 /// 
 /// This use case takes a mathematical expression string and evaluates it,
-/// returning the result as a formatted string. It handles division by zero
-/// by returning 'Infinity' or '-Infinity' as per JavaScript/Rhino behavior.
-/// It also supports parentheses for grouping operations and the power operator.
+/// returning an [EvaluationResult] that represents either success with the
+/// computed value, invalid input with an error message, or division by zero.
+/// 
+/// The use case integrates with [ValidateExpressionUseCase] to validate
+/// expressions before evaluation, ensuring proper error messages are returned.
 class EvaluateExpressionUseCase {
-  /// Executes the expression evaluation.
+  final ValidateExpressionUseCase _validateExpressionUseCase;
+  
+  /// Creates an instance with the required validation use case.
+  EvaluateExpressionUseCase({
+    ValidateExpressionUseCase? validateExpressionUseCase,
+  }) : _validateExpressionUseCase = validateExpressionUseCase ?? ValidateExpressionUseCase();
+  
+  /// Executes the expression evaluation and returns an [EvaluationResult].
   /// 
   /// Takes an [expression] string containing a mathematical expression
-  /// (e.g., "10/0", "5+3*2", "(2+3)*4", "2^3") and returns the evaluated result as a string.
+  /// (e.g., "10/0", "5+3*2", "(2+3)*4", "2^3") and returns the evaluated result.
   /// 
-  /// Division by zero behavior (matches JavaScript/Rhino):
-  /// - Positive number / 0 = 'Infinity'
-  /// - Negative number / 0 = '-Infinity'
-  /// - 0 / 0 = 'NaN'
-  /// 
-  /// Power operator:
-  /// - Supports '^' for exponentiation (e.g., "2^3" = 8)
-  /// - Power has higher precedence than multiplication/division
-  /// 
-  /// Parentheses:
-  /// - Supports nested parentheses for grouping operations
-  /// - Unmatched parentheses return 'Error'
-  String execute(String expression) {
+  /// Returns:
+  /// - [EvaluationSuccess] with the computed value on successful evaluation
+  /// - [EvaluationInvalidInput] with error message for invalid expressions
+  /// - [EvaluationDivisionByZero] for division by zero cases
+  EvaluationResult execute(String expression) {
+    // Handle edge case: empty or whitespace-only expression
+    if (expression.trim().isEmpty) {
+      return const EvaluationInvalidInput('Expression cannot be empty');
+    }
+    
+    // Validate the expression before evaluation
+    final validationResult = _validateExpressionUseCase.execute(expression);
+    if (validationResult is ValidationFailure) {
+      return EvaluationInvalidInput(validationResult.message);
+    }
+    
     try {
       // Replace display operators with calculation operators
       String normalizedExpression = expression
           .replaceAll('×', '*')
           .replaceAll('÷', '/');
       
-      // Validate parentheses balance
-      if (!_areParenthesesBalanced(normalizedExpression)) {
-        return 'Error';
+      // Additional edge case handling
+      final edgeCaseResult = _handleEdgeCases(normalizedExpression);
+      if (edgeCaseResult != null) {
+        return edgeCaseResult;
       }
       
       // Parse and evaluate the expression
       final result = _evaluate(normalizedExpression);
       
-      // Format the result
-      if (result.isInfinite) {
-        return result.isNegative ? '-Infinity' : 'Infinity';
-      }
-      if (result.isNaN) {
-        return 'NaN';
+      // Check for division by zero result
+      if (result.isInfinite || result.isNaN) {
+        return _createDivisionByZeroResult(result);
       }
       
-      // Format the result - remove trailing zeros for whole numbers
-      if (result == result.truncateToDouble()) {
-        return result.toInt().toString();
-      }
-      return result.toString();
+      return EvaluationSuccess(result);
+    } on FormatException catch (e) {
+      return EvaluationInvalidInput('Invalid expression format: ${e.message}');
+    } on RangeError catch (_) {
+      return const EvaluationInvalidInput('Expression parsing error');
+    } on ArgumentError catch (e) {
+      return EvaluationInvalidInput('Invalid argument: ${e.message}');
     } catch (e) {
-      return 'Error';
+      // Catch any other unexpected errors
+      return EvaluationInvalidInput('Evaluation error: ${e.toString()}');
     }
+  }
+  
+  /// Legacy execute method that returns a string for backward compatibility.
+  /// 
+  /// @deprecated Use [execute] instead which returns [EvaluationResult].
+  String executeString(String expression) {
+    final result = execute(expression);
+    
+    return switch (result) {
+      EvaluationSuccess() => result.formattedValue,
+      EvaluationInvalidInput() => 'Error',
+      EvaluationDivisionByZero() => result.displayValue,
+    };
+  }
+  
+  /// Handles edge cases that might slip past validation.
+  EvaluationResult? _handleEdgeCases(String expression) {
+    final trimmed = expression.replaceAll(' ', '');
+    
+    // Check for expression with only operators
+    if (RegExp(r'^[+\-*/^]+$').hasMatch(trimmed)) {
+      return const EvaluationInvalidInput('Expression contains only operators');
+    }
+    
+    // Check for malformed power expressions like "^2" or "2^"
+    if (trimmed.startsWith('^')) {
+      return const EvaluationInvalidInput('Expression cannot start with power operator');
+    }
+    if (trimmed.endsWith('^')) {
+      return const EvaluationInvalidInput('Expression cannot end with power operator');
+    }
+    
+    // Check for consecutive power operators
+    if (trimmed.contains('^^')) {
+      return const EvaluationInvalidInput('Invalid consecutive power operators');
+    }
+    
+    // Check for invalid decimal points
+    if (RegExp(r'\d*\.\d*\.\d*').hasMatch(trimmed)) {
+      return const EvaluationInvalidInput('Invalid number format: multiple decimal points');
+    }
+    
+    // Check for adjacent numbers without operator (e.g., "12 34")
+    // This handles cases like "5(3)" which should be "5*(3)"
+    if (RegExp(r'\d\(').hasMatch(trimmed)) {
+      return const EvaluationInvalidInput('Missing operator before parenthesis');
+    }
+    if (RegExp(r'\)\d').hasMatch(trimmed)) {
+      return const EvaluationInvalidInput('Missing operator after parenthesis');
+    }
+    
+    return null;
+  }
+  
+  /// Creates the appropriate division by zero result based on the value.
+  EvaluationDivisionByZero _createDivisionByZeroResult(double result) {
+    if (result.isNaN) {
+      return const EvaluationDivisionByZero(isPositive: null);
+    }
+    return EvaluationDivisionByZero(isPositive: !result.isNegative);
   }
   
   /// Checks if parentheses in the expression are balanced.
@@ -82,6 +288,11 @@ class EvaluateExpressionUseCase {
     // Handle empty expression
     if (expression.isEmpty) {
       return 0;
+    }
+    
+    // Validate parentheses balance (extra safety check)
+    if (!_areParenthesesBalanced(expression)) {
+      throw const FormatException('Unbalanced parentheses');
     }
     
     // Handle parentheses recursively
@@ -112,7 +323,7 @@ class EvaluateExpressionUseCase {
       }
       
       if (openIndex == -1 || closeIndex == -1 || closeIndex <= openIndex) {
-        throw FormatException('Invalid parentheses');
+        throw const FormatException('Invalid parentheses');
       }
       
       // Extract the sub-expression inside parentheses
@@ -120,7 +331,7 @@ class EvaluateExpressionUseCase {
       
       // Handle empty parentheses
       if (subExpression.isEmpty) {
-        throw FormatException('Empty parentheses');
+        throw const FormatException('Empty parentheses');
       }
       
       // Evaluate the sub-expression

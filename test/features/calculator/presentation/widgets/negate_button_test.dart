@@ -8,6 +8,7 @@ import 'package:android_calculator_flutter/features/calculator/domain/usecases/i
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/negate_value_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
+import 'package:android_calculator_flutter/features/calculator/presentation/theme/calculator_dimensions.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/calculator_button_grid.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/clear_button_config.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/negate_button_config.dart';
@@ -57,12 +58,12 @@ void main() {
     );
   }
 
-  group('Negate Button - Label Display', () {
+  group('Negate Button - Label Display (AC2)', () {
     testWidgets('displays negate button with correct +/- label',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
 
-      // Verify the button displays '+/-' text
+      // Verify the button displays '+/-' text as specified in AC2
       expect(find.text('+/-'), findsOneWidget);
     });
 
@@ -81,6 +82,26 @@ void main() {
 
       // Verify the button can be found by its key
       expect(find.byKey(const Key('negate_button')), findsOneWidget);
+    });
+
+    testWidgets('+/- label text is visible and readable',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final negateButtonFinder = find.byKey(const Key('negate_button'));
+
+      // Find the Text widget inside the button
+      final textWidget = tester.widget<Text>(
+        find.descendant(
+          of: negateButtonFinder,
+          matching: find.text('+/-'),
+        ),
+      );
+
+      // Verify text has a style (is styled, not plain)
+      expect(textWidget.style, isNotNull);
+      // Verify font size is appropriate for readability (24sp as per specs)
+      expect(textWidget.style?.fontSize, equals(CalculatorDimensions.circularButtonTextSize));
     });
   });
 
@@ -247,7 +268,7 @@ void main() {
       expect(decoration.color, equals(const Color(0xFF505050)));
     });
 
-    testWidgets('negate button has circular shape',
+    testWidgets('negate button has circular shape via high border radius',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
 
@@ -261,8 +282,26 @@ void main() {
 
       final decoration = container.decoration as BoxDecoration;
 
-      // Verify the button has circular shape
-      expect(decoration.shape, equals(BoxShape.circle));
+      // Verify the button has circular shape via high border radius (1000dp)
+      // The calculator uses BorderRadius.circular(1000.0) for pill/circular appearance
+      expect(decoration.borderRadius, isNotNull);
+      final borderRadius = decoration.borderRadius as BorderRadius;
+      expect(
+        borderRadius.topLeft.x,
+        equals(CalculatorDimensions.circularButtonRadius),
+      );
+      expect(
+        borderRadius.topRight.x,
+        equals(CalculatorDimensions.circularButtonRadius),
+      );
+      expect(
+        borderRadius.bottomLeft.x,
+        equals(CalculatorDimensions.circularButtonRadius),
+      );
+      expect(
+        borderRadius.bottomRight.x,
+        equals(CalculatorDimensions.circularButtonRadius),
+      );
     });
 
     testWidgets('negate button text is white for good contrast',
@@ -310,12 +349,33 @@ void main() {
       // Verify both buttons have the same background color
       expect(negateDecoration.color, equals(clearDecoration.color));
 
-      // Verify both buttons have the same shape
-      expect(negateDecoration.shape, equals(clearDecoration.shape));
+      // Verify both buttons have the same border radius for circular shape
+      expect(negateDecoration.borderRadius, equals(clearDecoration.borderRadius));
+    });
+
+    testWidgets('negate button has borderless appearance',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final negateButtonFinder = find.byKey(const Key('negate_button'));
+      final container = tester.widget<Container>(
+        find.descendant(
+          of: negateButtonFinder,
+          matching: find.byType(Container),
+        ).first,
+      );
+
+      final decoration = container.decoration as BoxDecoration;
+
+      // Verify borderless styling (no visible border or transparent border)
+      if (decoration.border != null) {
+        final border = decoration.border as Border;
+        expect(border.top.color, equals(Colors.transparent));
+      }
     });
   });
 
-  group('Negate Button - Position in Grid', () {
+  group('Negate Button - Position in Grid (Bottom-Left)', () {
     testWidgets('negate button is in the bottom row (Row 5)',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
@@ -347,7 +407,7 @@ void main() {
           reason: '+/- and = should be in the same row');
     });
 
-    testWidgets('negate button is leftmost in the bottom row',
+    testWidgets('negate button is leftmost in the bottom row (bottom-left position)',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
 
@@ -375,6 +435,54 @@ void main() {
       // Negate button should be below the 1-2-3 row
       expect(negateY, greaterThan(digit1Y),
           reason: '+/- should be below the 1-2-3 row');
+    });
+
+    testWidgets('negate button is in column 1 of the 5-row button grid',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Compare negate button X position with buttons in column 1 of other rows
+      final negateX = tester.getCenter(find.byKey(const Key('negate_button'))).dx;
+      final clearX = tester.getCenter(find.byKey(const Key('clear_button'))).dx;
+      final digit7X = tester.getCenter(find.text('7')).dx;
+      final digit4X = tester.getCenter(find.text('4')).dx;
+      final digit1X = tester.getCenter(find.text('1')).dx;
+
+      // All column 1 buttons should be aligned (within tolerance)
+      const tolerance = 5.0;
+      expect((negateX - clearX).abs(), lessThan(tolerance),
+          reason: '+/- should be aligned with C button');
+      expect((negateX - digit7X).abs(), lessThan(tolerance),
+          reason: '+/- should be aligned with 7');
+      expect((negateX - digit4X).abs(), lessThan(tolerance),
+          reason: '+/- should be aligned with 4');
+      expect((negateX - digit1X).abs(), lessThan(tolerance),
+          reason: '+/- should be aligned with 1');
+    });
+
+    testWidgets('bottom row layout follows spec: +/-, 0, ., =',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Get all button positions in bottom row
+      final negatePos = tester.getCenter(find.byKey(const Key('negate_button')));
+      final zeroPos = tester.getCenter(find.text('0'));
+      final decimalPos = tester.getCenter(find.text('.'));
+      final equalsPos = tester.getCenter(find.byKey(const Key('equals_button')));
+
+      // Verify horizontal ordering (left to right)
+      expect(negatePos.dx < zeroPos.dx, isTrue,
+          reason: '+/- should be first (leftmost)');
+      expect(zeroPos.dx < decimalPos.dx, isTrue,
+          reason: '0 should be second');
+      expect(decimalPos.dx < equalsPos.dx, isTrue,
+          reason: '. should be third');
+
+      // Verify all are on the same row
+      const tolerance = 5.0;
+      expect((negatePos.dy - zeroPos.dy).abs(), lessThan(tolerance));
+      expect((zeroPos.dy - decimalPos.dy).abs(), lessThan(tolerance));
+      expect((decimalPos.dy - equalsPos.dy).abs(), lessThan(tolerance));
     });
   });
 

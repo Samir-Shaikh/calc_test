@@ -12,8 +12,9 @@ import '../entities/validation_result.dart';
 class ValidateExpressionUseCase {
   /// Regex pattern for detecting invalid consecutive operator combinations.
   /// Matches patterns like: ++, --, +-, -+, */, /*, etc.
+  /// Note: Allows ^- for negative exponents (e.g., 2^-1)
   static final RegExp _consecutiveOperatorsPattern = RegExp(
-    r'[+\-*/×÷^][+*/×÷^]|[+\-*/×÷^]{3,}|[*/×÷^][+\-*/×÷^]'
+    r'[+\-][+\-]|[+\-*/×÷^]{3,}|[*/×÷][+\-*/×÷^]|[+\-][*/×÷^]|\^[+*/×÷^]'
   );
   
   /// Regex pattern for detecting expression ending with an operator.

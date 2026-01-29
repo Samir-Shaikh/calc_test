@@ -112,3 +112,17 @@ class EqualsPressed extends ExpressionDisplayEvent {
   @override
   String toString() => 'EqualsPressed()';
 }
+
+/// Event triggered when the negate/plus-minus (+/-) button is pressed.
+///
+/// This event triggers the toggle sign logic for the current number
+/// at the cursor position. It handles:
+/// - Empty expression: Inserts a minus sign
+/// - Positive number: Makes it negative
+/// - Negative number: Makes it positive
+class NegatePressed extends ExpressionDisplayEvent {
+  const NegatePressed();
+
+  @override
+  String toString() => 'NegatePressed()';
+}
