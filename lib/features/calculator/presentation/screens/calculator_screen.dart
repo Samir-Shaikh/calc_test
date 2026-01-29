@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/expression_display/expression_display_bloc.dart';
+import '../blocs/expression_display/expression_display_event.dart';
 import '../blocs/expression_display/expression_display_state.dart';
 import '../theme/calculator_dimensions.dart';
 import '../widgets/backspace_button.dart';
@@ -32,17 +33,16 @@ class CalculatorScreen extends StatelessWidget {
       body: SafeArea(
         child: BlocListener<ExpressionDisplayBloc, ExpressionDisplayState>(
           listenWhen: (previous, current) {
-            // Only listen when transitioning to an evaluation error state
-            return !previous.isEvaluationError && current.isEvaluationError;
+            // Only listen when showError transitions from false to true
+            return !previous.showError && current.showError;
           },
           listener: (context, state) {
-            // Show toast when evaluation error occurs
-            if (state.isEvaluationError && state.evaluationError != null) {
-              CalculatorToast.show(
-                context,
-                message: state.evaluationError!,
-                type: ToastType.error,
-              );
+            // Show 'Invalid Input' toast when showError is true
+            if (state.showError) {
+              CalculatorToast.showInvalidInput(context);
+              // Immediately dispatch ErrorAcknowledged to reset showError flag
+              // and prevent repeated toast displays
+              context.read<ExpressionDisplayBloc>().add(const ErrorAcknowledged());
             }
           },
           child: Padding(
