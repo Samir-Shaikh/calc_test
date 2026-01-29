@@ -10,6 +10,8 @@ export 'calculator_button.dart';
 export 'calculator_button_grid.dart';
 export 'calculator_toast.dart';
 export 'clear_button_config.dart';
+export 'expression_display_widget.dart';
 export 'negate_button_config.dart';
 export 'parenthesis_button_config.dart';
 export 'power_button_config.dart';
+export 'result_display_widget.dart';
