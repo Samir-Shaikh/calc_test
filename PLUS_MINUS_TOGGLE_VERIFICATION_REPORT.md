@@ -61,19 +61,89 @@ The Plus/Minus toggle feature has been fully implemented and verified through co
 
 **Requirement:** +/- button displays the label "+/-"
 
+**Targeted Verification Run (Task #11):**
+- **Date:** January 29, 2025
+- **Widget Tests (Label Display):** 4/4 PASSED
+- **Golden Tests:** 17/17 PASSED
+- **Integration Tests (AC2):** 6/6 PASSED
+
+#### Widget Test Results (AC2 Specific - Label Display)
+
+| Test ID | Test Name | Result |
+|---------|-----------|--------|
+| AC2.1 | displays negate button with correct +/- label | ✅ Pass |
+| AC2.2 | negate button label matches NegateButtonConfig.label | ✅ Pass |
+| AC2.3 | negate button has correct key identifier | ✅ Pass |
+| AC2.4 | +/- label text is visible and readable | ✅ Pass |
+
+#### Golden Test Results (AC2 Visual Verification)
+
+| Category | Tests | Result |
+|----------|-------|--------|
+| Isolated Button Visual Verification | 3 | ✅ Pass |
+| Button in Grid Context | 3 | ✅ Pass |
+| Calculator Grid Layout - Position Verification | 2 | ✅ Pass |
+| Button Pressed/Highlight State | 3 | ✅ Pass |
+| Design Specification Verification | 5 | ✅ Pass |
+| Comparison with Other Function Buttons | 1 | ✅ Pass |
+| **Total** | **17** | ✅ **All Pass** |
+
+#### Integration Test Results (AC2 Specific)
+
+| Test Name | Result |
+|-----------|--------|
+| +/- button is visible in the calculator | ✅ Pass |
+| +/- button displays "+/-" label | ✅ Pass |
+| NegateButtonConfig has correct label configuration | ✅ Pass |
+| +/- button has correct key identifier | ✅ Pass |
+| +/- button has correct styling configuration | ✅ Pass |
+| +/- button is positioned in the correct row (Row 5) | ✅ Pass |
+
+#### AC2 Full Test Scenario Matrix
+
 | Test Scenario | Expected Result | Actual Result | Status |
 |--------------|-----------------|---------------|--------|
 | Button label text | "+/-" | "+/-" | ✅ Pass |
 | Button key identifier | "negate" | "negate" | ✅ Pass |
 | Button visibility | Visible | Visible | ✅ Pass |
 | Label readability | Readable white text | Readable white text | ✅ Pass |
+| Background color | #505050 (Gray) | #505050 (Gray) | ✅ Pass |
+| Button shape | Circular | Circular | ✅ Pass |
+| Position in grid | Bottom-left (Row 5, Col 1) | Bottom-left (Row 5, Col 1) | ✅ Pass |
 
 **Test Files:**
 - `test/features/calculator/presentation/widgets/negate_button_test.dart` (24 tests)
+- `test/goldens/plus_minus_button_golden_test.dart` (17 tests)
+- `test/integration/plus_minus_toggle_integration_test.dart` (26 tests)
 
 ### AC3: Empty Expression Handling ✅ PASSED
 
 **Requirement:** Given empty expression, tapping +/- results in "-" in expression
+
+**Targeted Verification Run (Task #12):**
+- **Date:** January 29, 2025
+- **Unit Tests (AC3):** 5/5 PASSED
+- **Integration Tests (AC3):** 3/3 PASSED
+
+#### Unit Test Results (AC3 Specific)
+
+| Test ID | Test Name | Result |
+|---------|-----------|--------|
+| AC3.1 | empty expression becomes "-" after pressing +/- | ✅ Pass |
+| AC3.2 | empty expression with explicit cursor at 0 becomes "-" | ✅ Pass |
+| AC3.3 | cursor moves to position 1 after inserting minus in empty expression | ✅ Pass |
+| AC3.4 | continuing to type after "-" creates valid negative number | ✅ Pass |
+| AC3.5 | pressing +/- twice on empty expression results in empty expression | ✅ Pass |
+
+#### Integration Test Results (AC3 Specific)
+
+| Test Name | Result |
+|-----------|--------|
+| tapping +/- on empty expression inserts "-" | ✅ Pass |
+| tapping +/- on empty then entering digit results in negative number | ✅ Pass |
+| double tap +/- on empty cancels out | ✅ Pass |
+
+#### AC3 Full Test Scenario Matrix
 
 | Test Scenario | Expected Result | Actual Result | Status |
 |--------------|-----------------|---------------|--------|
@@ -82,10 +152,11 @@ The Plus/Minus toggle feature has been fully implemented and verified through co
 | Cursor moves to position 1 | Position 1 | Position 1 | ✅ Pass |
 | Continue typing after "-" | Valid negative number | Valid negative number | ✅ Pass |
 | Double tap on empty | "" (empty) | "" (empty) | ✅ Pass |
+| Tap +/- then enter "9" | "-9" | "-9" | ✅ Pass |
 
 **Test Files:**
 - `test/features/calculator/domain/usecases/negate_value_use_case_test.dart`
-- `test/integration/plus_minus_toggle_integration_test.dart` (26 tests)
+- `test/integration/plus_minus_toggle_integration_test.dart`
 
 ---
 
@@ -145,13 +216,26 @@ The Plus/Minus toggle feature has been fully implemented and verified through co
 | Integration with Calculator | 3 | ✅ Pass |
 | **Total** | **24** | ✅ **All Pass** |
 
+### Golden Tests (Visual Verification)
+**File:** `test/goldens/plus_minus_button_golden_test.dart`
+
+| Category | Tests | Status |
+|----------|-------|--------|
+| Isolated Button Visual Verification | 3 | ✅ Pass |
+| Button in Grid Context | 3 | ✅ Pass |
+| Calculator Grid Layout | 2 | ✅ Pass |
+| Button Pressed/Highlight State | 3 | ✅ Pass |
+| Design Specification Verification | 5 | ✅ Pass |
+| Comparison with Other Function Buttons | 1 | ✅ Pass |
+| **Total** | **17** | ✅ **All Pass** |
+
 ### Integration Tests
 **File:** `test/integration/plus_minus_toggle_integration_test.dart`
 
 | Category | Tests | Status |
 |----------|-------|--------|
 | AC1 - Insert Minus at Cursor | 5 | ✅ Pass |
-| AC2 - Button Visibility/Label | 4 | ✅ Pass |
+| AC2 - Button Visibility/Label | 6 | ✅ Pass |
 | AC3 - Empty Expression | 3 | ✅ Pass |
 | Complete User Flow Scenarios | 4 | ✅ Pass |
 | Edge Cases and Error Handling | 6 | ✅ Pass |
@@ -168,8 +252,9 @@ The Plus/Minus toggle feature has been fully implemented and verified through co
 | Unit Tests (NegateValueUseCase) | 84 | 84 | 0 | 100% |
 | BLoC Tests (ExpressionDisplayBloc) | 40 | 40 | 0 | 100% |
 | Widget Tests (Negate Button) | 24 | 24 | 0 | 100% |
+| Golden Tests (Visual Verification) | 17 | 17 | 0 | 100% |
 | Integration Tests | 26 | 26 | 0 | 100% |
-| **TOTAL** | **174** | **174** | **0** | **100%** |
+| **TOTAL** | **191** | **191** | **0** | **100%** |
 
 ---
 
@@ -214,6 +299,7 @@ The Plus/Minus toggle feature has been fully implemented and verified through co
 - [x] Unit tests cover all domain logic scenarios → **84 tests passing**
 - [x] BLoC tests cover state management → **40 tests passing**
 - [x] Widget tests cover UI rendering and interaction → **24 tests passing**
+- [x] Golden tests cover visual verification → **17 tests passing**
 - [x] Integration tests cover end-to-end flows → **26 tests passing**
 - [x] Button styling matches specification (gray function button) → **VERIFIED**
 - [x] Button position matches specification (bottom-left) → **VERIFIED**
@@ -228,7 +314,7 @@ The Plus/Minus (+/-) toggle feature has been successfully implemented and thorou
 2. **AC2:** The button correctly displays the "+/-" label
 3. **AC3:** The feature correctly handles empty expressions by inserting "-"
 
-With **174 tests passing at 100%**, the feature is verified and ready for production use.
+With **191 tests passing at 100%**, the feature is verified and ready for production use.
 
 ---
 
@@ -237,6 +323,8 @@ With **174 tests passing at 100%**, the feature is verified and ready for produc
 | Task | Verification Target | Date | Result |
 |------|---------------------|------|--------|
 | Task #10 | AC1 - Insert Minus in Expression | January 29, 2025 | ✅ 10/10 tests passed |
+| Task #11 | AC2 - Button Displays Plus/Minus Label | January 29, 2025 | ✅ 27/27 tests passed (4 widget + 17 golden + 6 integration) |
+| Task #12 | AC3 - Insert Minus in Empty Expression | January 29, 2025 | ✅ 8/8 tests passed (5 unit + 3 integration) |
 
 ---
 
