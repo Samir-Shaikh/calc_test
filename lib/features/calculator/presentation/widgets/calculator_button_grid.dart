@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/expression_display/expression_display_bloc.dart';
 import '../blocs/expression_display/expression_display_event.dart';
+import '../theme/calculator_colors.dart';
 import '../theme/calculator_dimensions.dart';
+import 'calculator_button.dart';
 import 'clear_button_config.dart';
 import 'negate_button_config.dart';
 import 'operator_button_config.dart';
@@ -21,20 +23,40 @@ import 'power_button_config.dart';
 /// - Row 5: +/-, 0, ., =
 ///
 /// Each button dispatches the appropriate event to the [ExpressionDisplayBloc]
-/// when tapped.
+/// when tapped. All buttons use [CalculatorButton] with circular styling:
+/// - 70dp height
+/// - 5dp margins (applied within each button for consistent spacing)
+/// - Borderless appearance
+/// - 24sp text size
+///
+/// ## Grid Spacing Design
+///
+/// The grid uses a consistent 5dp spacing approach:
+/// - Each [CalculatorButton] has a 5dp internal margin on all sides
+/// - Adjacent buttons have their margins combined (5dp + 5dp = 10dp visual gap)
+/// - Grid padding matches button margins for consistent edge spacing
+/// - No additional grid-level spacing is added to avoid double-spacing
+///
+/// This design ensures the circular buttons display properly with uniform
+/// spacing on all screen sizes.
 class CalculatorButtonGrid extends StatelessWidget {
   const CalculatorButtonGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      // Grid padding matches button margins for consistent edge spacing
       padding: const EdgeInsets.all(CalculatorDimensions.gridPadding),
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Calculate row height based on available height
-          // 5 rows + 4 gaps between them
+          // 5 rows with spacing handled by button margins
           final availableHeight = constraints.maxHeight;
-          final buttonHeight = (availableHeight - (CalculatorDimensions.rowSpacing * 4)) / 5;
+          // Each button has 5dp top and bottom margin (total 10dp per row in margins)
+          // For 5 rows: 5 * buttonHeight + 5 * (2 * buttonMargin)
+          // But we use the available height to scale appropriately
+          final totalButtonMargins = CalculatorDimensions.circularButtonMargin * 2 * 5;
+          final buttonHeight = (availableHeight - totalButtonMargins) / 5;
 
           return Table(
             defaultColumnWidth: const FlexColumnWidth(1),
@@ -52,8 +74,6 @@ class CalculatorButtonGrid extends StatelessWidget {
                   }),
                 ],
               ),
-              // Spacing row
-              _buildSpacingRow(CalculatorDimensions.rowSpacing),
               // Row 2: 7, 8, 9, ×
               _buildTableRow(
                 context,
@@ -67,8 +87,6 @@ class CalculatorButtonGrid extends StatelessWidget {
                   }),
                 ],
               ),
-              // Spacing row
-              _buildSpacingRow(CalculatorDimensions.rowSpacing),
               // Row 3: 4, 5, 6, +
               _buildTableRow(
                 context,
@@ -82,8 +100,6 @@ class CalculatorButtonGrid extends StatelessWidget {
                   }),
                 ],
               ),
-              // Spacing row
-              _buildSpacingRow(CalculatorDimensions.rowSpacing),
               // Row 4: 1, 2, 3, -
               _buildTableRow(
                 context,
@@ -97,8 +113,6 @@ class CalculatorButtonGrid extends StatelessWidget {
                   }),
                 ],
               ),
-              // Spacing row
-              _buildSpacingRow(CalculatorDimensions.rowSpacing),
               // Row 5: +/-, 0, ., =
               _buildTableRow(
                 context,
@@ -118,52 +132,35 @@ class CalculatorButtonGrid extends StatelessWidget {
   }
 
   /// Builds a table row with the given buttons.
+  ///
+  /// Each button is placed in a [TableCell] with consistent height.
+  /// The buttons handle their own internal margins (5dp), so no additional
+  /// spacing cells are needed between buttons.
   TableRow _buildTableRow(
     BuildContext context,
     double height,
     List<Widget> buttons,
   ) {
-    final cells = <Widget>[];
-    for (var i = 0; i < buttons.length; i++) {
-      cells.add(
-        TableCell(
-          child: SizedBox(
-            height: height,
-            child: buttons[i],
-          ),
-        ),
-      );
-      // Add spacing between buttons (except after the last one)
-      if (i < buttons.length - 1) {
-        cells.add(
-          TableCell(
-            child: SizedBox(
-              width: CalculatorDimensions.buttonSpacing,
-              height: height,
-            ),
-          ),
-        );
-      }
-    }
+    // Calculate total height including button's internal margins
+    final totalHeight = height + (CalculatorDimensions.circularButtonMargin * 2);
 
-    return TableRow(children: cells);
-  }
-
-  /// Builds a spacing row between button rows.
-  TableRow _buildSpacingRow(double height) {
     return TableRow(
-      children: List.generate(
-        7, // 4 buttons + 3 spacers
-        (_) => TableCell(
-          child: SizedBox(height: height),
-        ),
-      ),
+      children: buttons
+          .map((button) => TableCell(
+                child: SizedBox(
+                  height: totalHeight,
+                  child: button,
+                ),
+              ))
+          .toList(),
     );
   }
 
   /// Builds a digit button (0-9).
+  ///
+  /// Uses [CalculatorButton] with circular styling and numeric button colors.
   Widget _buildDigitButton(BuildContext context, String digit, {bool isDecimal = false}) {
-    return _CalculatorButton(
+    return CalculatorButton(
       label: digit,
       onPressed: () {
         if (isDecimal) {
@@ -172,8 +169,8 @@ class CalculatorButtonGrid extends StatelessWidget {
           context.read<ExpressionDisplayBloc>().add(NumericPressed(digit));
         }
       },
-      backgroundColor: Colors.grey.shade800,
-      textColor: Colors.white,
+      backgroundColor: CalculatorColors.numericButtonBackground,
+      textColor: CalculatorColors.lightButtonText,
     );
   }
 
@@ -182,7 +179,7 @@ class CalculatorButtonGrid extends StatelessWidget {
   /// Uses [ClearButtonConfig] for styling and dispatches
   /// [ClearPressed] event when tapped to reset the expression.
   Widget _buildClearButton(BuildContext context) {
-    return _CalculatorButton(
+    return CalculatorButton(
       key: const Key('clear_button'),
       label: ClearButtonConfig.label,
       onPressed: () {
@@ -199,7 +196,7 @@ class CalculatorButtonGrid extends StatelessWidget {
   /// Uses [ParenthesisButtonConfig] for styling and dispatches
   /// [ParenthesisPressed] event when tapped.
   Widget _buildParenthesisButton(BuildContext context) {
-    return _CalculatorButton(
+    return CalculatorButton(
       key: const Key('parenthesis_button'),
       label: ParenthesisButtonConfig.label,
       onPressed: () {
@@ -216,7 +213,7 @@ class CalculatorButtonGrid extends StatelessWidget {
   /// Uses [PowerButtonConfig] for styling and dispatches
   /// [PowerOperatorPressed] event when tapped.
   Widget _buildPowerButton(BuildContext context) {
-    return _CalculatorButton(
+    return CalculatorButton(
       key: const Key('power_button'),
       label: PowerButtonConfig.label,
       onPressed: () {
@@ -233,7 +230,7 @@ class CalculatorButtonGrid extends StatelessWidget {
   /// Uses [NegateButtonConfig] for styling and dispatches
   /// [NegatePressed] event when tapped to toggle the sign of the current number.
   Widget _buildNegateButton(BuildContext context) {
-    return _CalculatorButton(
+    return CalculatorButton(
       key: const Key('negate_button'),
       label: NegateButtonConfig.label,
       onPressed: () {
@@ -250,7 +247,7 @@ class CalculatorButtonGrid extends StatelessWidget {
   /// Uses [OperatorButtonConfig] for styling to ensure consistent
   /// orange (#FF9500) background across all operator buttons.
   Widget _buildOperatorButton(BuildContext context, String operator, VoidCallback onPressed) {
-    return _CalculatorButton(
+    return CalculatorButton(
       label: operator,
       onPressed: onPressed,
       backgroundColor: OperatorButtonConfig.backgroundColor,
@@ -264,7 +261,7 @@ class CalculatorButtonGrid extends StatelessWidget {
   /// Uses [EqualsButtonConfig] for styling to ensure the button displays
   /// with the correct orange (#FF9500) background color and '=' symbol.
   Widget _buildEqualsButton(BuildContext context) {
-    return _CalculatorButton(
+    return CalculatorButton(
       key: const Key('equals_button'),
       label: EqualsButtonConfig.label,
       onPressed: () {
@@ -273,48 +270,6 @@ class CalculatorButtonGrid extends StatelessWidget {
       backgroundColor: EqualsButtonConfig.backgroundColor,
       textColor: EqualsButtonConfig.textColor,
       decoration: EqualsButtonConfig.decoration,
-    );
-  }
-}
-
-/// A single calculator button with customizable styling.
-class _CalculatorButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-  final Color backgroundColor;
-  final Color textColor;
-  final BoxDecoration? decoration;
-
-  const _CalculatorButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    required this.backgroundColor,
-    required this.textColor,
-    this.decoration,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        decoration: decoration ??
-            BoxDecoration(
-              color: backgroundColor,
-              shape: BoxShape.circle,
-            ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

@@ -68,16 +68,86 @@ class CalculatorDimensions {
   /// and the backspace button row.
   static const double backspaceButtonTopSpacing = 4.0;
 
+  // ==================== Circular Button Dimensions ====================
+  //
+  // These constants define the circular button design used throughout
+  // the calculator. Values are mapped 1:1 from Android dp (density-independent
+  // pixels) to Flutter logical pixels, as both units scale identically
+  // across different screen densities.
+  //
+  // Android dp to Flutter logical pixel mapping:
+  // - 70dp in Android XML → 70.0 logical pixels in Flutter
+  // - 5dp in Android XML → 5.0 logical pixels in Flutter
+  // - 24sp in Android XML → 24.0 logical pixels in Flutter
+  // - 1000dp border radius → 1000.0 logical pixels (creates circular shape)
+
+  /// Height of circular calculator buttons.
+  ///
+  /// Maps to Android: 70dp button height.
+  /// In Flutter, this is 70.0 logical pixels.
+  static const double circularButtonHeight = 70.0;
+
+  /// Margin around circular calculator buttons.
+  ///
+  /// Maps to Android: 5dp margin on each side.
+  /// In Flutter, this is 5.0 logical pixels.
+  /// This provides consistent spacing between buttons when each button
+  /// applies this margin, resulting in 10dp visual spacing between adjacent buttons.
+  static const double circularButtonMargin = 5.0;
+
+  /// Text size for circular calculator buttons.
+  ///
+  /// Maps to Android: 24sp text size.
+  /// In Flutter, this is 24.0 logical pixels (sp and dp are equivalent
+  /// for standard text scaling).
+  static const double circularButtonTextSize = 24.0;
+
+  /// Border radius for circular calculator buttons.
+  ///
+  /// A large value (1000.0) ensures the button appears fully circular
+  /// when the width and height are constrained to similar values.
+  /// This creates the pill/circular shape regardless of actual dimensions.
+  static const double circularButtonRadius = 1000.0;
+
+  // Semantic aliases for button dimensions (for clarity in usage)
+
+  /// Alias for [circularButtonHeight] - the standard button height.
+  static const double buttonHeight = circularButtonHeight;
+
+  /// Alias for [circularButtonMargin] - the standard button margin.
+  static const double buttonMargin = circularButtonMargin;
+
+  /// Alias for [circularButtonTextSize] - the standard button text size.
+  static const double buttonTextSize = circularButtonTextSize;
+
+  /// Alias for [circularButtonRadius] - the standard button border radius.
+  static const double buttonBorderRadius = circularButtonRadius;
+
   // ==================== Button Grid Dimensions ====================
 
-  /// Horizontal spacing between buttons in the grid.
-  static const double buttonSpacing = 12.0;
+  /// Horizontal spacing between button cells in the grid.
+  ///
+  /// Set to 0.0 because individual buttons already have [circularButtonMargin]
+  /// applied internally. When two buttons are adjacent, their combined margins
+  /// (5dp + 5dp = 10dp) create the visual spacing between them.
+  /// This provides consistent 5dp margins around each button as per the
+  /// circular design specification.
+  static const double buttonSpacing = 0.0;
 
   /// Vertical spacing between rows in the button grid.
-  static const double rowSpacing = 12.0;
+  ///
+  /// Set to 0.0 because individual buttons already have [circularButtonMargin]
+  /// applied internally. When two rows are adjacent, the combined margins
+  /// (5dp + 5dp = 10dp) create the visual spacing between them.
+  /// This ensures consistent 5dp margins around each button.
+  static const double rowSpacing = 0.0;
 
   /// Padding around the entire button grid.
-  static const double gridPadding = 16.0;
+  ///
+  /// Uses the same value as [circularButtonMargin] to ensure the grid edge
+  /// spacing matches the button's internal margins. Combined with the button's
+  /// 5dp internal margin, this creates consistent visual spacing on all edges.
+  static const double gridPadding = circularButtonMargin;
 
   // ==================== Toast Dimensions ====================
 
