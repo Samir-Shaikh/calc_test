@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/expression_display/expression_display_bloc.dart';
 import '../blocs/expression_display/expression_display_event.dart';
 import 'parenthesis_button_config.dart';
+import 'power_button_config.dart';
 
 /// A widget that displays the calculator button grid.
 ///
@@ -92,10 +93,12 @@ class CalculatorButtonGrid extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Row 5: 0, ., ⌫, =
+          // Row 5: ^, 0, ., ⌫, =
           Expanded(
             child: Row(
               children: [
+                _buildPowerButton(context),
+                const SizedBox(width: 12),
                 _buildDigitButton(context, '0'),
                 const SizedBox(width: 12),
                 _buildDigitButton(context, '.', isDecimal: true),
@@ -146,6 +149,25 @@ class CalculatorButtonGrid extends StatelessWidget {
         backgroundColor: ParenthesisButtonConfig.backgroundColor,
         textColor: ParenthesisButtonConfig.textColor,
         decoration: ParenthesisButtonConfig.decoration,
+      ),
+    );
+  }
+
+  /// Builds the power operator button.
+  ///
+  /// Uses [PowerButtonConfig] for styling and dispatches
+  /// [PowerOperatorPressed] event when tapped.
+  Widget _buildPowerButton(BuildContext context) {
+    return Expanded(
+      child: _CalculatorButton(
+        key: const Key('power_button'),
+        label: PowerButtonConfig.label,
+        onPressed: () {
+          context.read<ExpressionDisplayBloc>().add(const PowerOperatorPressed());
+        },
+        backgroundColor: PowerButtonConfig.backgroundColor,
+        textColor: PowerButtonConfig.textColor,
+        decoration: PowerButtonConfig.decoration,
       ),
     );
   }

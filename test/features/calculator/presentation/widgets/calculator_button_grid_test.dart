@@ -7,6 +7,7 @@ import 'package:android_calculator_flutter/features/calculator/domain/usecases/i
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/calculator_button_grid.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/parenthesis_button_config.dart';
+import 'package:android_calculator_flutter/features/calculator/presentation/widgets/power_button_config.dart';
 
 void main() {
   late InsertParenthesisUseCase insertParenthesisUseCase;
@@ -77,6 +78,13 @@ void main() {
       await tester.pumpWidget(createTestWidget());
 
       expect(find.text('.'), findsOneWidget);
+    });
+
+    testWidgets('displays power button', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.text(PowerButtonConfig.label), findsOneWidget);
+      expect(find.text('^'), findsOneWidget);
     });
   });
 
@@ -153,6 +161,84 @@ void main() {
     });
   });
 
+  group('Power Button', () {
+    testWidgets('displays power button with correct label', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.text(PowerButtonConfig.label), findsOneWidget);
+      expect(find.text('^'), findsOneWidget);
+    });
+
+    testWidgets('power button has correct key', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.byKey(const Key('power_button')), findsOneWidget);
+    });
+
+    testWidgets('power button is positioned in last row', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Find the power button
+      final powerButton = find.byKey(const Key('power_button'));
+      expect(powerButton, findsOneWidget);
+
+      // Verify it exists alongside other last-row buttons
+      expect(find.text('0'), findsOneWidget);
+      expect(find.text('.'), findsOneWidget);
+      expect(find.text('⌫'), findsOneWidget);
+      expect(find.text('='), findsOneWidget);
+    });
+
+    testWidgets('tapping power button dispatches PowerOperatorPressed event', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // First add a digit so power operator can be inserted
+      await tester.tap(find.text('2'));
+      await tester.pump();
+
+      expect(bloc.state.expression.value, equals('2'));
+
+      // Tap the power button
+      await tester.tap(find.byKey(const Key('power_button')));
+      await tester.pump();
+
+      // After tapping, expression should contain '2^'
+      expect(bloc.state.expression.value, equals('2^'));
+    });
+
+    testWidgets('power button uses gray background color', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      final powerButtonFinder = find.byKey(const Key('power_button'));
+      expect(powerButtonFinder, findsOneWidget);
+
+      // Verify the button's decoration uses the correct background color
+      final container = tester.widget<Container>(
+        find.descendant(
+          of: powerButtonFinder,
+          matching: find.byType(Container),
+        ).first,
+      );
+
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, equals(PowerButtonConfig.backgroundColor));
+    });
+
+    testWidgets('building expression with power operator', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Build expression: 2^3
+      await tester.tap(find.text('2'));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('power_button')));
+      await tester.pump();
+      await tester.tap(find.text('3'));
+      await tester.pump();
+
+      expect(bloc.state.expression.value, equals('2^3'));
+    });
+  });
+
   group('Button interactions', () {
     testWidgets('tapping digit buttons updates expression', (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
@@ -197,6 +283,28 @@ void main() {
       await tester.pump();
 
       expect(bloc.state.expression.value, equals('(5+3)'));
+    });
+
+    testWidgets('combining digits, operators, parentheses, and power', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+
+      // Build expression: (2^3)+1
+      await tester.tap(find.byKey(const Key('parenthesis_button'))); // (
+      await tester.pump();
+      await tester.tap(find.text('2'));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('power_button'))); // ^
+      await tester.pump();
+      await tester.tap(find.text('3'));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('parenthesis_button'))); // )
+      await tester.pump();
+      await tester.tap(find.text('+'));
+      await tester.pump();
+      await tester.tap(find.text('1'));
+      await tester.pump();
+
+      expect(bloc.state.expression.value, equals('(2^3)+1'));
     });
   });
 }
