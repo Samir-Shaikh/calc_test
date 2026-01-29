@@ -110,7 +110,7 @@ void main() {
         expect(find.byIcon(Icons.info_outline), findsOneWidget);
       });
 
-      testWidgets('uses correct background color', (WidgetTester tester) async {
+      testWidgets('uses correct background color for error type', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget(
           child: Builder(
             builder: (context) => ElevatedButton(
@@ -118,6 +118,7 @@ void main() {
                 CalculatorToast.show(
                   context,
                   message: 'Test message',
+                  type: ToastType.error,
                 );
               },
               child: const Text('Show Toast'),
@@ -130,7 +131,7 @@ void main() {
 
         // Find the SnackBar and verify its background color
         final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
-        expect(snackBar.backgroundColor, equals(CalculatorColors.toastBackgroundColor));
+        expect(snackBar.backgroundColor, equals(CalculatorColors.toastErrorBackgroundColor));
       });
 
       testWidgets('uses floating behavior', (WidgetTester tester) async {
@@ -363,6 +364,86 @@ void main() {
       });
     });
 
+    group('showInvalidInput() method', () {
+      testWidgets('displays Invalid Input message', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.showInvalidInput(context);
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        // Verify 'Invalid Input' text is displayed
+        expect(find.text('Invalid Input'), findsOneWidget);
+        expect(find.text(CalculatorToast.invalidInputMessage), findsOneWidget);
+      });
+
+      testWidgets('uses error type with error icon', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.showInvalidInput(context);
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        // Verify error icon is displayed
+        expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      });
+
+      testWidgets('uses short duration (2 seconds)', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.showInvalidInput(context);
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+        expect(snackBar.duration, equals(CalculatorDimensions.toastDurationShort));
+        expect(snackBar.duration, equals(const Duration(seconds: 2)));
+      });
+
+      testWidgets('uses error background color', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.showInvalidInput(context);
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+        expect(snackBar.backgroundColor, equals(CalculatorColors.toastErrorBackgroundColor));
+      });
+    });
+
     group('toast auto-dismiss configuration', () {
       testWidgets('snackbar has default duration of 3 seconds', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget(
@@ -466,6 +547,192 @@ void main() {
       });
     });
 
+    group('toast styling matches specification', () {
+      testWidgets('toast has correct border radius', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.show(
+                  context,
+                  message: 'Test message',
+                );
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+        final shape = snackBar.shape as RoundedRectangleBorder;
+        final borderRadius = shape.borderRadius as BorderRadius;
+        
+        expect(borderRadius, equals(BorderRadius.circular(CalculatorDimensions.toastBorderRadius)));
+      });
+
+      testWidgets('toast has correct margin', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.show(
+                  context,
+                  message: 'Test message',
+                );
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+        expect(snackBar.margin, equals(const EdgeInsets.all(CalculatorDimensions.toastMargin)));
+      });
+
+      testWidgets('toast icon has correct size', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.show(
+                  context,
+                  message: 'Test',
+                  type: ToastType.error,
+                );
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final icon = tester.widget<Icon>(find.byIcon(Icons.error_outline));
+        expect(icon.size, equals(CalculatorDimensions.toastIconSize));
+      });
+
+      testWidgets('toast text has correct font size', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.show(
+                  context,
+                  message: 'Test message',
+                );
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final textWidget = tester.widget<Text>(find.text('Test message'));
+        expect(textWidget.style?.fontSize, equals(CalculatorDimensions.toastFontSize));
+      });
+
+      testWidgets('toast text has white color', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.show(
+                  context,
+                  message: 'Test message',
+                );
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final textWidget = tester.widget<Text>(find.text('Test message'));
+        expect(textWidget.style?.color, equals(CalculatorColors.toastTextColor));
+        expect(textWidget.style?.color, equals(Colors.white));
+      });
+
+      testWidgets('error toast uses error background color', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.show(
+                  context,
+                  message: 'Error',
+                  type: ToastType.error,
+                );
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+        expect(snackBar.backgroundColor, equals(CalculatorColors.toastErrorBackgroundColor));
+      });
+
+      testWidgets('success toast uses standard background color', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.show(
+                  context,
+                  message: 'Success',
+                  type: ToastType.success,
+                );
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+        expect(snackBar.backgroundColor, equals(CalculatorColors.toastBackgroundColor));
+      });
+
+      testWidgets('info toast uses standard background color', (WidgetTester tester) async {
+        await tester.pumpWidget(createTestWidget(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                CalculatorToast.show(
+                  context,
+                  message: 'Info',
+                  type: ToastType.info,
+                );
+              },
+              child: const Text('Show Toast'),
+            ),
+          ),
+        ));
+
+        await tester.tap(find.text('Show Toast'));
+        await tester.pump();
+
+        final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+        expect(snackBar.backgroundColor, equals(CalculatorColors.toastBackgroundColor));
+      });
+    });
+
     group('ToastType enum', () {
       test('has error type', () {
         expect(ToastType.values, contains(ToastType.error));
@@ -481,6 +748,12 @@ void main() {
 
       test('has exactly three types', () {
         expect(ToastType.values.length, equals(3));
+      });
+    });
+
+    group('invalidInputMessage constant', () {
+      test('equals Invalid Input', () {
+        expect(CalculatorToast.invalidInputMessage, equals('Invalid Input'));
       });
     });
   });
