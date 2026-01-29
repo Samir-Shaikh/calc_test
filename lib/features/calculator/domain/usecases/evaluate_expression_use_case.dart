@@ -1,19 +1,25 @@
+import 'dart:math' as math;
+
 /// Use case for evaluating mathematical expressions.
 /// 
 /// This use case takes a mathematical expression string and evaluates it,
 /// returning the result as a formatted string. It handles division by zero
 /// by returning 'Infinity' or '-Infinity' as per JavaScript/Rhino behavior.
-/// It also supports parentheses for grouping operations.
+/// It also supports parentheses for grouping operations and the power operator.
 class EvaluateExpressionUseCase {
   /// Executes the expression evaluation.
   /// 
   /// Takes an [expression] string containing a mathematical expression
-  /// (e.g., "10/0", "5+3*2", "(2+3)*4") and returns the evaluated result as a string.
+  /// (e.g., "10/0", "5+3*2", "(2+3)*4", "2^3") and returns the evaluated result as a string.
   /// 
   /// Division by zero behavior (matches JavaScript/Rhino):
   /// - Positive number / 0 = 'Infinity'
   /// - Negative number / 0 = '-Infinity'
   /// - 0 / 0 = 'NaN'
+  /// 
+  /// Power operator:
+  /// - Supports '^' for exponentiation (e.g., "2^3" = 8)
+  /// - Power has higher precedence than multiplication/division
   /// 
   /// Parentheses:
   /// - Supports nested parentheses for grouping operations
@@ -69,7 +75,7 @@ class EvaluateExpressionUseCase {
   
   /// Evaluates a mathematical expression string.
   /// 
-  /// Supports: +, -, *, / operators with proper precedence and parentheses.
+  /// Supports: +, -, *, /, ^ operators with proper precedence and parentheses.
   double _evaluate(String expression) {
     expression = expression.replaceAll(' ', '');
     
@@ -178,16 +184,24 @@ class EvaluateExpressionUseCase {
   }
   
   bool _isOperator(String char) {
-    return ['+', '-', '*', '/'].contains(char);
+    return ['+', '-', '*', '/', '^'].contains(char);
   }
   
   /// Evaluates tokens with proper operator precedence.
+  /// 
+  /// Precedence (highest to lowest):
+  /// 1. ^ (power/exponentiation)
+  /// 2. * and / (multiplication and division)
+  /// 3. + and - (addition and subtraction)
   double _evaluateTokens(List<String> tokens) {
     if (tokens.isEmpty) {
       return 0;
     }
     
-    // First pass: handle * and /
+    // First pass: handle ^ (power) - right-to-left associativity
+    tokens = _evaluatePowerOperators(tokens);
+    
+    // Second pass: handle * and /
     final addSubTokens = <String>[];
     var i = 0;
     
@@ -211,7 +225,7 @@ class EvaluateExpressionUseCase {
       i++;
     }
     
-    // Second pass: handle + and -
+    // Third pass: handle + and -
     var result = double.parse(addSubTokens[0]);
     i = 1;
     while (i < addSubTokens.length) {
@@ -223,6 +237,33 @@ class EvaluateExpressionUseCase {
         result -= operand;
       }
       i += 2;
+    }
+    
+    return result;
+  }
+  
+  /// Evaluates power operators in the token list.
+  /// 
+  /// Power operator is right-associative, meaning 2^3^2 = 2^(3^2) = 2^9 = 512
+  List<String> _evaluatePowerOperators(List<String> tokens) {
+    // Process from right to left for right-associativity
+    final result = List<String>.from(tokens);
+    
+    // Find and evaluate power operations from right to left
+    for (var i = result.length - 2; i >= 1; i--) {
+      if (result[i] == '^') {
+        final base = double.parse(result[i - 1]);
+        final exponent = double.parse(result[i + 1]);
+        final powerResult = math.pow(base, exponent).toDouble();
+        
+        // Replace the three tokens (base, ^, exponent) with the result
+        result.removeAt(i + 1);
+        result.removeAt(i);
+        result[i - 1] = powerResult.toString();
+        
+        // Continue from the current position since we modified the list
+        i = result.length - 1;
+      }
     }
     
     return result;

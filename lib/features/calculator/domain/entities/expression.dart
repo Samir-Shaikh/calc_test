@@ -11,6 +11,10 @@ class Expression {
   /// Defaults to the end of the expression.
   final int cursorPosition;
   
+  /// List of valid operator characters supported by the calculator.
+  /// Includes: +, -, *, /, × (multiplication), ÷ (division), ^ (power)
+  static const List<String> validOperators = ['+', '-', '*', '/', '×', '÷', '^'];
+  
   /// Creates a new Expression with the given value and cursor position.
   /// 
   /// If [cursorPosition] is not provided, it defaults to the end of the expression.
@@ -19,6 +23,30 @@ class Expression {
   
   /// Creates an empty expression.
   factory Expression.empty() => Expression('', 0);
+  
+  /// Checks if the given character is a valid operator.
+  static bool isOperator(String char) {
+    return validOperators.contains(char);
+  }
+  
+  /// Returns the character before the cursor position, or null if at the start.
+  String? get characterBeforeCursor {
+    if (cursorPosition == 0 || value.isEmpty) {
+      return null;
+    }
+    return value[cursorPosition - 1];
+  }
+  
+  /// Returns true if the character before the cursor is an operator.
+  bool get hasOperatorBeforeCursor {
+    final char = characterBeforeCursor;
+    return char != null && isOperator(char);
+  }
+  
+  /// Returns true if the character before the cursor is an opening parenthesis.
+  bool get hasOpenParenthesisBeforeCursor {
+    return characterBeforeCursor == '(';
+  }
   
   /// Inserts a character at the current cursor position.
   /// 
@@ -40,6 +68,17 @@ class Expression {
       throw ArgumentError('Invalid parenthesis character: $parenthesis');
     }
     return insertAt(parenthesis);
+  }
+  
+  /// Inserts an operator at the current cursor position.
+  /// 
+  /// This is a convenience method that validates the operator character.
+  /// Throws [ArgumentError] if the operator is not valid.
+  Expression insertOperator(String operator) {
+    if (!isOperator(operator)) {
+      throw ArgumentError('Invalid operator character: $operator');
+    }
+    return insertAt(operator);
   }
   
   /// Appends a character to the end of the expression.
