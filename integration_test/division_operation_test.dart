@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:samplecalc/main.dart';
+
+import 'helpers/test_app.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -9,7 +9,7 @@ void main() {
   group('Division Operation Integration Tests', () {
     testWidgets('division by zero shows Infinity on display - AC4', (WidgetTester tester) async {
       // Build the calculator app
-      await tester.pumpWidget(const CalculatorApp());
+      await tester.pumpWidget(const CalculatorTestApp());
       await tester.pumpAndSettle();
 
       // Tap '1'
@@ -37,7 +37,7 @@ void main() {
     });
 
     testWidgets('simple 1/0 division by zero shows Infinity', (WidgetTester tester) async {
-      await tester.pumpWidget(const CalculatorApp());
+      await tester.pumpWidget(const CalculatorTestApp());
       await tester.pumpAndSettle();
 
       // Tap '1'
@@ -61,7 +61,7 @@ void main() {
     });
 
     testWidgets('normal division operation works correctly', (WidgetTester tester) async {
-      await tester.pumpWidget(const CalculatorApp());
+      await tester.pumpWidget(const CalculatorTestApp());
       await tester.pumpAndSettle();
 
       // Tap '8'
@@ -85,7 +85,7 @@ void main() {
     });
 
     testWidgets('0/0 division shows NaN', (WidgetTester tester) async {
-      await tester.pumpWidget(const CalculatorApp());
+      await tester.pumpWidget(const CalculatorTestApp());
       await tester.pumpAndSettle();
 
       // Find and tap the first '0' button (there are two 0 buttons)
