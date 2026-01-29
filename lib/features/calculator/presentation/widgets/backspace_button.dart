@@ -15,6 +15,18 @@ import 'backspace_button_config.dart';
 /// The button uses styling from [BackspaceButtonConfig] for consistent
 /// appearance with other calculator buttons.
 ///
+/// ## RTL Support
+///
+/// This button is designed to work correctly in both LTR and RTL layouts:
+/// - The button itself is centered within its container (no directional bias)
+/// - Parent widgets handle the positional alignment using [MainAxisAlignment.end]
+/// - The backspace icon ([Icons.backspace_outlined]) is orientation-neutral
+///   and works well in both LTR and RTL contexts
+///
+/// The positioning of this button in RTL mode is handled by the parent
+/// [_BackspaceButtonRow] widget in [CalculatorScreen], which uses
+/// [MainAxisAlignment.end] to place it at the logical end of the row.
+///
 /// Example usage:
 /// ```dart
 /// BackspaceButton()
@@ -31,6 +43,7 @@ class BackspaceButton extends StatelessWidget {
         width: CalculatorDimensions.backspaceButtonSize,
         height: CalculatorDimensions.backspaceButtonSize,
         decoration: BackspaceButtonConfig.decoration,
+        // Center alignment is direction-neutral and works for both LTR and RTL
         child: Center(
           child: BackspaceButtonConfig.iconWidget,
         ),

@@ -1,4 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 
+        RTL (Right-to-Left) Language Support Configuration
+        ==================================================
+        This application supports RTL layouts for languages like Arabic, Hebrew, Persian, etc.
+        
+        Key RTL configuration:
+        - android:supportsRtl="true" enables automatic layout mirroring when device locale
+          is set to an RTL language
+        - The Flutter framework handles RTL text direction automatically based on locale
+        - Layout mirroring affects start/end padding, margins, and directional drawables
+        
+        For more information, see:
+        https://developer.android.com/training/basics/supporting-devices/languages#RTL
+    -->
     <application
         android:label="Calculator"
         android:name="${applicationName}"
