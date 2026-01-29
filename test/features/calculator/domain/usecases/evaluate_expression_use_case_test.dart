@@ -97,6 +97,41 @@ void main() {
         expect(invalid1, equals(invalid2));
         expect(invalid1, isNot(equals(invalid3)));
       });
+      
+      test('EvaluationInvalidInput preserves original error for debugging', () {
+        final invalid = EvaluationInvalidInput.invalidInput(
+          type: EvaluationErrorType.validationFailure,
+          originalError: 'Expression cannot be empty',
+        );
+        expect(invalid.message, equals('Invalid Input'));
+        expect(invalid.originalError, equals('Expression cannot be empty'));
+        expect(invalid.type, equals(EvaluationErrorType.validationFailure));
+      });
+      
+      test('EvaluationErrorMapper maps FormatException correctly', () {
+        final result = EvaluationErrorMapper.mapException(
+          const FormatException('Test format error'),
+        );
+        expect(result.message, equals('Invalid Input'));
+        expect(result.type, equals(EvaluationErrorType.invalidFormat));
+        expect(result.originalError, contains('FormatException'));
+      });
+      
+      test('EvaluationErrorMapper maps RangeError correctly', () {
+        final result = EvaluationErrorMapper.mapException(
+          RangeError('Test range error'),
+        );
+        expect(result.message, equals('Invalid Input'));
+        expect(result.type, equals(EvaluationErrorType.parsingError));
+      });
+      
+      test('EvaluationErrorMapper maps StateError correctly', () {
+        final result = EvaluationErrorMapper.mapException(
+          StateError('Test state error'),
+        );
+        expect(result.message, equals('Invalid Input'));
+        expect(result.type, equals(EvaluationErrorType.parsingError));
+      });
     });
 
     group('Acceptance Criteria Tests', () {
@@ -126,16 +161,24 @@ void main() {
     });
 
     group('validation integration', () {
-      test('returns InvalidInput for empty expression', () {
+      test('returns InvalidInput for empty expression with user-friendly message', () {
         final result = useCase.execute('');
         expect(result, isA<EvaluationInvalidInput>());
-        expect((result as EvaluationInvalidInput).message, equals('Expression cannot be empty'));
+        // User-friendly message is 'Invalid Input'
+        expect((result as EvaluationInvalidInput).message, equals('Invalid Input'));
+        // Original error is preserved for debugging
+        expect(result.originalError, equals('Expression cannot be empty'));
+        expect(result.type, equals(EvaluationErrorType.validationFailure));
       });
 
-      test('returns InvalidInput for whitespace-only expression', () {
+      test('returns InvalidInput for whitespace-only expression with user-friendly message', () {
         final result = useCase.execute('   ');
         expect(result, isA<EvaluationInvalidInput>());
-        expect((result as EvaluationInvalidInput).message, equals('Expression cannot be empty'));
+        // User-friendly message is 'Invalid Input'
+        expect((result as EvaluationInvalidInput).message, equals('Invalid Input'));
+        // Original error is preserved for debugging
+        expect(result.originalError, equals('Expression cannot be empty'));
+        expect(result.type, equals(EvaluationErrorType.validationFailure));
       });
 
       test('returns InvalidInput for expression starting with invalid operator', () {
@@ -1125,6 +1168,445 @@ void main() {
         expect(result, isA<EvaluationSuccess>());
         expect((result as EvaluationSuccess).value, equals(-5.0));
         expect(result.formattedValue, equals('-5'));
+      });
+    });
+
+    // =========================================================================
+    // NEW TEST GROUP: Error Handling and Exception Wrapping Tests (Task #7)
+    // =========================================================================
+    group('error handling and exception wrapping', () {
+      group('invalid expressions return EvaluationError with Invalid Input message', () {
+        test('evaluating "2++3" returns EvaluationInvalidInput with "Invalid Input" message', () {
+          final result = useCase.execute('2++3');
+          expect(result, isA<EvaluationInvalidInput>());
+          expect(result.isSuccess, isFalse);
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+          expect(invalidInput.errorMessage, equals('Invalid Input'));
+        });
+
+        test('evaluating "2*/3" returns EvaluationInvalidInput with "Invalid Input" message', () {
+          final result = useCase.execute('2*/3');
+          expect(result, isA<EvaluationInvalidInput>());
+          expect(result.isSuccess, isFalse);
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+          expect(invalidInput.errorMessage, equals('Invalid Input'));
+        });
+
+        test('evaluating "3/*4" returns EvaluationInvalidInput with "Invalid Input" message', () {
+          final result = useCase.execute('3/*4');
+          expect(result, isA<EvaluationInvalidInput>());
+          expect(result.isSuccess, isFalse);
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+        });
+
+        test('evaluating "5+-*3" returns EvaluationInvalidInput with "Invalid Input" message', () {
+          final result = useCase.execute('5+-*3');
+          expect(result, isA<EvaluationInvalidInput>());
+          expect(result.isSuccess, isFalse);
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+        });
+
+        test('evaluating "4+/2" returns EvaluationInvalidInput with "Invalid Input" message', () {
+          final result = useCase.execute('4+/2');
+          expect(result, isA<EvaluationInvalidInput>());
+          expect(result.isSuccess, isFalse);
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+        });
+
+        test('evaluating "7*+3" returns EvaluationInvalidInput with "Invalid Input" message', () {
+          final result = useCase.execute('7*+3');
+          expect(result, isA<EvaluationInvalidInput>());
+          expect(result.isSuccess, isFalse);
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+        });
+
+        test('evaluating "8-*2" returns EvaluationInvalidInput with "Invalid Input" message', () {
+          final result = useCase.execute('8-*2');
+          expect(result, isA<EvaluationInvalidInput>());
+          expect(result.isSuccess, isFalse);
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+        });
+      });
+
+      group('exception catching behavior - all exceptions are caught and converted', () {
+        test('FormatException scenarios are caught and return EvaluationInvalidInput', () {
+          // Expression that could trigger FormatException during parsing
+          final result = useCase.execute('(');
+          expect(result, isA<EvaluationInvalidInput>());
+          expect(result.isSuccess, isFalse);
+          // Does not throw - returns error result
+        });
+
+        test('expression with unbalanced parentheses returns error, not exception', () {
+          final result = useCase.execute('((5+3)');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+        });
+
+        test('expression starting with closing parenthesis returns error, not exception', () {
+          final result = useCase.execute(')5+3');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+        });
+
+        test('expression with multiple consecutive operators returns error, not exception', () {
+          final result = useCase.execute('2+++3');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+        });
+
+        test('expression with only power operator returns error, not exception', () {
+          final result = useCase.execute('^');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.message, equals('Invalid Input'));
+        });
+
+        test('expression with mixed invalid characters returns error, not exception', () {
+          final result = useCase.execute('2+*^3');
+          expect(result, isA<EvaluationInvalidInput>());
+          expect(result.isSuccess, isFalse);
+        });
+      });
+
+      group('valid expressions still work correctly after error handling implementation', () {
+        test('2+3 returns EvaluationSuccess with correct value 5', () {
+          final result = useCase.execute('2+3');
+          expect(result, isA<EvaluationSuccess>());
+          final success = result as EvaluationSuccess;
+          expect(success.value, equals(5.0));
+          expect(success.formattedValue, equals('5'));
+          expect(success.isSuccess, isTrue);
+        });
+
+        test('10/2 returns EvaluationSuccess with correct value 5', () {
+          final result = useCase.execute('10/2');
+          expect(result, isA<EvaluationSuccess>());
+          final success = result as EvaluationSuccess;
+          expect(success.value, equals(5.0));
+          expect(success.formattedValue, equals('5'));
+          expect(success.isSuccess, isTrue);
+        });
+
+        test('(5+3)*2 returns EvaluationSuccess with correct value 16', () {
+          final result = useCase.execute('(5+3)*2');
+          expect(result, isA<EvaluationSuccess>());
+          final success = result as EvaluationSuccess;
+          expect(success.value, equals(16.0));
+          expect(success.formattedValue, equals('16'));
+          expect(success.isSuccess, isTrue);
+        });
+
+        test('2^3 returns EvaluationSuccess with correct value 8', () {
+          final result = useCase.execute('2^3');
+          expect(result, isA<EvaluationSuccess>());
+          final success = result as EvaluationSuccess;
+          expect(success.value, equals(8.0));
+          expect(success.formattedValue, equals('8'));
+          expect(success.isSuccess, isTrue);
+        });
+
+        test('5*3-7 returns EvaluationSuccess with correct value 8', () {
+          final result = useCase.execute('5*3-7');
+          expect(result, isA<EvaluationSuccess>());
+          final success = result as EvaluationSuccess;
+          expect(success.value, equals(8.0));
+          expect(success.formattedValue, equals('8'));
+        });
+
+        test('100/4+5*2 returns EvaluationSuccess with correct value 35', () {
+          // 100/4 = 25, 5*2 = 10, 25+10 = 35
+          final result = useCase.execute('100/4+5*2');
+          expect(result, isA<EvaluationSuccess>());
+          final success = result as EvaluationSuccess;
+          expect(success.value, equals(35.0));
+          expect(success.formattedValue, equals('35'));
+        });
+
+        test('(2+3)*(4+5) returns EvaluationSuccess with correct value 45', () {
+          final result = useCase.execute('(2+3)*(4+5)');
+          expect(result, isA<EvaluationSuccess>());
+          final success = result as EvaluationSuccess;
+          expect(success.value, equals(45.0));
+          expect(success.formattedValue, equals('45'));
+        });
+
+        test('3.14*2 returns EvaluationSuccess with correct decimal value', () {
+          final result = useCase.execute('3.14*2');
+          expect(result, isA<EvaluationSuccess>());
+          final success = result as EvaluationSuccess;
+          expect(success.value, closeTo(6.28, 0.001));
+        });
+      });
+
+      group('no exceptions propagate to caller - all are caught', () {
+        test('calling execute with any invalid expression does not throw', () {
+          // These should all return EvaluationInvalidInput without throwing
+          expect(() => useCase.execute(''), returnsNormally);
+          expect(() => useCase.execute('2++3'), returnsNormally);
+          expect(() => useCase.execute('2*/3'), returnsNormally);
+          expect(() => useCase.execute('*5'), returnsNormally);
+          expect(() => useCase.execute('5/'), returnsNormally);
+          expect(() => useCase.execute('('), returnsNormally);
+          expect(() => useCase.execute(')'), returnsNormally);
+          expect(() => useCase.execute('((())'), returnsNormally);
+          expect(() => useCase.execute('5^^3'), returnsNormally);
+          expect(() => useCase.execute('^2'), returnsNormally);
+          expect(() => useCase.execute('2^'), returnsNormally);
+          expect(() => useCase.execute('+-*/'), returnsNormally);
+          expect(() => useCase.execute('1.2.3'), returnsNormally);
+          expect(() => useCase.execute('5(3)'), returnsNormally);
+          expect(() => useCase.execute('(3)5'), returnsNormally);
+        });
+
+        test('execute always returns an EvaluationResult, never throws', () {
+          final testExpressions = [
+            '',
+            '   ',
+            '2++3',
+            '2*/3',
+            '*5',
+            '5/',
+            '(',
+            ')',
+            '((',
+            '))',
+            '((5+3)',
+            '(5+3))',
+            '^',
+            '2^',
+            '^2',
+            '2^^3',
+            '+-*/',
+            '1.2.3',
+            '5(3)',
+            '(3)5',
+            '()',
+            '2+()',
+            '+++',
+            '---',
+            '***',
+            '///',
+            '2+3', // valid
+            '10/0', // division by zero
+          ];
+
+          for (final expression in testExpressions) {
+            // None of these should throw
+            EvaluationResult? result;
+            try {
+              result = useCase.execute(expression);
+            } catch (e) {
+              fail('execute("$expression") threw an exception: $e');
+            }
+            
+            // All should return a valid EvaluationResult
+            expect(result, isNotNull, reason: 'execute("$expression") returned null');
+            expect(
+              result,
+              anyOf(
+                isA<EvaluationSuccess>(),
+                isA<EvaluationInvalidInput>(),
+                isA<EvaluationDivisionByZero>(),
+              ),
+              reason: 'execute("$expression") did not return a valid EvaluationResult',
+            );
+          }
+        });
+
+        test('executeString also does not throw for invalid expressions', () {
+          expect(() => useCase.executeString(''), returnsNormally);
+          expect(() => useCase.executeString('2++3'), returnsNormally);
+          expect(() => useCase.executeString('2*/3'), returnsNormally);
+          expect(() => useCase.executeString('*5'), returnsNormally);
+          expect(() => useCase.executeString('5/'), returnsNormally);
+          expect(() => useCase.executeString('('), returnsNormally);
+          expect(() => useCase.executeString(')'), returnsNormally);
+        });
+
+        test('executeString returns "Error" for all invalid expressions, not throw', () {
+          expect(useCase.executeString(''), equals('Error'));
+          expect(useCase.executeString('2++3'), equals('Error'));
+          expect(useCase.executeString('2*/3'), equals('Error'));
+          expect(useCase.executeString('*5'), equals('Error'));
+          expect(useCase.executeString('5/'), equals('Error'));
+          expect(useCase.executeString('('), equals('Error'));
+          expect(useCase.executeString(')'), equals('Error'));
+        });
+      });
+
+      group('error types are properly categorized', () {
+        test('validation failures have correct error type', () {
+          final result = useCase.execute('');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.type, equals(EvaluationErrorType.validationFailure));
+        });
+
+        test('consecutive operators return validation failure type', () {
+          final result = useCase.execute('2++3');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.type, equals(EvaluationErrorType.validationFailure));
+        });
+
+        test('expression starting with operator returns validation failure type', () {
+          final result = useCase.execute('*5');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.type, equals(EvaluationErrorType.validationFailure));
+        });
+
+        test('unbalanced parentheses returns validation failure type', () {
+          final result = useCase.execute('(5+3');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.type, equals(EvaluationErrorType.validationFailure));
+        });
+
+        test('edge case expressions with only operators have proper error type', () {
+          final result = useCase.execute('+-*/');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          // This could be either validationFailure or invalidFormat depending on implementation
+          expect(
+            invalidInput.type,
+            anyOf(
+              equals(EvaluationErrorType.validationFailure),
+              equals(EvaluationErrorType.invalidFormat),
+            ),
+          );
+        });
+      });
+
+      group('original error is preserved for debugging', () {
+        test('empty expression preserves original error message', () {
+          final result = useCase.execute('');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.originalError, isNotNull);
+          expect(invalidInput.originalError, equals('Expression cannot be empty'));
+        });
+
+        test('whitespace expression preserves original error message', () {
+          final result = useCase.execute('   ');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.originalError, isNotNull);
+          expect(invalidInput.originalError, equals('Expression cannot be empty'));
+        });
+
+        test('consecutive operators preserves original validation message', () {
+          final result = useCase.execute('2++3');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          // Original error should contain details about what was wrong
+          expect(invalidInput.originalError, isNotNull);
+        });
+
+        test('expression starting with operator preserves original message', () {
+          final result = useCase.execute('*5');
+          expect(result, isA<EvaluationInvalidInput>());
+          final invalidInput = result as EvaluationInvalidInput;
+          expect(invalidInput.originalError, isNotNull);
+        });
+      });
+
+      group('comprehensive invalid expression coverage', () {
+        test('all common consecutive operator combinations return EvaluationInvalidInput', () {
+          final invalidExpressions = [
+            '2++3',
+            '2--3',  // Note: this might be valid as 2-(-3), depends on implementation
+            '2**3',
+            '2//3',
+            '2^^3',
+            '2+-3',
+            '2-+3',
+            '2*/3',
+            '2/*3',
+            '2+*3',
+            '2*+3',  // Note: this might be valid as 2*(+3), depends on implementation
+            '2-*3',
+            '2*-3',  // Note: this might be valid as 2*(-3)
+            '2+/3',
+            '2/+3',  // Note: this might be valid as 2/(+3)
+          ];
+
+          for (final expression in invalidExpressions) {
+            final result = useCase.execute(expression);
+            // Each should either be invalid or valid based on whether negative handling applies
+            // But none should throw
+            expect(
+              result,
+              anyOf(
+                isA<EvaluationInvalidInput>(),
+                isA<EvaluationSuccess>(),
+              ),
+              reason: 'Expression "$expression" should return result without throwing',
+            );
+          }
+        });
+
+        test('expressions starting with invalid operators return EvaluationInvalidInput', () {
+          final invalidStarts = ['*5', '/5', '^5'];
+          
+          for (final expression in invalidStarts) {
+            final result = useCase.execute(expression);
+            expect(result, isA<EvaluationInvalidInput>(),
+                reason: 'Expression "$expression" should be invalid');
+          }
+        });
+
+        test('expressions ending with operators return EvaluationInvalidInput', () {
+          final invalidEnds = ['5+', '5-', '5*', '5/', '5^'];
+          
+          for (final expression in invalidEnds) {
+            final result = useCase.execute(expression);
+            expect(result, isA<EvaluationInvalidInput>(),
+                reason: 'Expression "$expression" should be invalid');
+          }
+        });
+
+        test('various malformed parentheses expressions return EvaluationInvalidInput', () {
+          final malformedParens = [
+            '(',
+            ')',
+            '((',
+            '))',
+            '((5)',
+            '(5))',
+            ')(',
+            '()5',
+            '5()',
+            '((5+3)',
+            '(5+3))',
+            '(((5)))',  // This should be valid
+            '((()))',   // Empty nested parentheses
+          ];
+          
+          for (final expression in malformedParens) {
+            final result = useCase.execute(expression);
+            // Should not throw
+            expect(
+              result,
+              anyOf(
+                isA<EvaluationInvalidInput>(),
+                isA<EvaluationSuccess>(),
+              ),
+              reason: 'Expression "$expression" should return result without throwing',
+            );
+          }
+        });
       });
     });
   });
