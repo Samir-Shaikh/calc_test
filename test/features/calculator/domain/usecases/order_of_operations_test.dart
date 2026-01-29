@@ -5,11 +5,15 @@ import 'package:android_calculator_flutter/features/calculator/domain/usecases/e
 /// - Multiplication is evaluated before addition (AC1)
 /// - Division is evaluated before subtraction (AC2)
 /// - Parentheses are evaluated first (AC3)
+/// - Exponentiation is evaluated before addition (AC4)
+/// - Same precedence operators are evaluated left-to-right (AC5)
 /// 
 /// These tests ensure the calculator follows PEMDAS/BODMAS rules where
 /// parentheses (P/B) have highest priority, followed by
+/// exponents (E/O), then
 /// multiplication (*) and division (/) have higher precedence than 
 /// addition (+) and subtraction (-).
+/// Operators of the same precedence level are evaluated left-to-right.
 void main() {
   late EvaluateExpressionUseCase useCase;
 
@@ -244,6 +248,332 @@ void main() {
         expect(result, isA<EvaluationSuccess>());
         expect(getResultValue(result), equals(2.0));
         expect(getResultString(result), equals('2'));
+      });
+    });
+
+    group('Exponent before Addition (AC4)', () {
+      test('AC4: 2^3+1 should equal 9.0, not 16.0', () {
+        // Acceptance Criterion 4: '2^3+1' should equal '9.0'
+        // Exponentiation is evaluated first: 2^3 = 8
+        // Then addition: 8 + 1 = 9
+        // If evaluated left-to-right without precedence: (2^3)+1 would still be 9, but 2^(3+1) = 16 (incorrect)
+        final result = useCase.execute('2^3+1');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(9.0));
+        expect(getResultString(result), equals('9'));
+        
+        // Explicitly verify it's NOT 16 (which would be wrong - 2^4)
+        expect(getResultValue(result), isNot(equals(16.0)));
+      });
+
+      test('1+2^3 should equal 9.0 (exponent before addition)', () {
+        // 2^3 = 8, then 1 + 8 = 9
+        final result = useCase.execute('1+2^3');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(9.0));
+        expect(getResultString(result), equals('9'));
+      });
+
+      test('2^2*3 should equal 12.0 (exponent then multiply)', () {
+        // Exponent first: 2^2 = 4
+        // Then multiplication: 4 * 3 = 12
+        final result = useCase.execute('2^2*3');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(12.0));
+        expect(getResultString(result), equals('12'));
+      });
+
+      test('3*2^2 should equal 12.0 (exponent before multiply)', () {
+        // Exponent first: 2^2 = 4
+        // Then multiplication: 3 * 4 = 12
+        final result = useCase.execute('3*2^2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(12.0));
+        expect(getResultString(result), equals('12'));
+      });
+
+      test('2^3^2 should equal 512.0 (right-to-left associativity)', () {
+        // Exponents are right-associative: 2^(3^2) = 2^9 = 512
+        // NOT (2^3)^2 = 8^2 = 64
+        final result = useCase.execute('2^3^2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(512.0));
+        expect(getResultString(result), equals('512'));
+        
+        // Explicitly verify it's NOT 64 (which would be wrong - left-to-right)
+        expect(getResultValue(result), isNot(equals(64.0)));
+      });
+
+      test('10-2^3 should equal 2.0 (exponent before subtraction)', () {
+        // 2^3 = 8, then 10 - 8 = 2
+        final result = useCase.execute('10-2^3');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(2.0));
+        expect(getResultString(result), equals('2'));
+      });
+
+      test('2+3*4^2 should equal 50.0 (exponent, then multiply, then add)', () {
+        // Exponent first: 4^2 = 16
+        // Then multiplication: 3 * 16 = 48
+        // Then addition: 2 + 48 = 50
+        final result = useCase.execute('2+3*4^2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(50.0));
+        expect(getResultString(result), equals('50'));
+      });
+
+      test('8/2^2 should equal 2.0 (exponent before division)', () {
+        // Exponent first: 2^2 = 4
+        // Then division: 8 / 4 = 2
+        final result = useCase.execute('8/2^2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(2.0));
+        expect(getResultString(result), equals('2'));
+      });
+
+      test('5^2+3^2 should equal 34.0 (both exponents before addition)', () {
+        // 5^2 = 25, 3^2 = 9
+        // Then addition: 25 + 9 = 34
+        final result = useCase.execute('5^2+3^2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(34.0));
+        expect(getResultString(result), equals('34'));
+      });
+
+      test('2^0 should equal 1.0 (any number to power of 0)', () {
+        final result = useCase.execute('2^0');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(1.0));
+        expect(getResultString(result), equals('1'));
+      });
+
+      test('2^1 should equal 2.0 (any number to power of 1)', () {
+        final result = useCase.execute('2^1');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(2.0));
+        expect(getResultString(result), equals('2'));
+      });
+
+      test('(2+1)^2 should equal 9.0 (parentheses override exponent precedence)', () {
+        // Parentheses first: (2+1) = 3
+        // Then exponent: 3^2 = 9
+        final result = useCase.execute('(2+1)^2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(9.0));
+        expect(getResultString(result), equals('9'));
+      });
+
+      test('2^(1+2) should equal 8.0 (parentheses in exponent)', () {
+        // Parentheses first: (1+2) = 3
+        // Then exponent: 2^3 = 8
+        final result = useCase.execute('2^(1+2)');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(8.0));
+        expect(getResultString(result), equals('8'));
+      });
+    });
+
+    group('Left-to-Right Evaluation (AC5)', () {
+      // Tests verifying that operators of the same precedence level
+      // are evaluated left-to-right, which is part of standard PEMDAS/BODMAS rules.
+
+      group('Addition/Subtraction Left-to-Right', () {
+        test('10-5-2 should equal 3.0 (left to right)', () {
+          // Left-to-right: (10-5)-2 = 5-2 = 3
+          // NOT right-to-left: 10-(5-2) = 10-3 = 7
+          final result = useCase.execute('10-5-2');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(3.0));
+          expect(getResultString(result), equals('3'));
+          
+          // Explicitly verify it's NOT 7 (which would be wrong - right-to-left)
+          expect(getResultValue(result), isNot(equals(7.0)));
+        });
+
+        test('20-10-5-2 should equal 3.0 (left to right)', () {
+          // Left-to-right: ((20-10)-5)-2 = (10-5)-2 = 5-2 = 3
+          final result = useCase.execute('20-10-5-2');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(3.0));
+          expect(getResultString(result), equals('3'));
+        });
+
+        test('10+5-3 should equal 12.0 (left to right)', () {
+          // Left-to-right: (10+5)-3 = 15-3 = 12
+          final result = useCase.execute('10+5-3');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(12.0));
+          expect(getResultString(result), equals('12'));
+        });
+
+        test('10-5+3 should equal 8.0 (left to right)', () {
+          // Left-to-right: (10-5)+3 = 5+3 = 8
+          final result = useCase.execute('10-5+3');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(8.0));
+          expect(getResultString(result), equals('8'));
+        });
+
+        test('100-50+25-10 should equal 65.0 (left to right)', () {
+          // Left-to-right: ((100-50)+25)-10 = (50+25)-10 = 75-10 = 65
+          final result = useCase.execute('100-50+25-10');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(65.0));
+          expect(getResultString(result), equals('65'));
+        });
+
+        test('5-3-1+2-1 should equal 2.0 (left to right)', () {
+          // Left-to-right: ((((5-3)-1)+2)-1) = ((2-1)+2)-1 = (1+2)-1 = 3-1 = 2
+          final result = useCase.execute('5-3-1+2-1');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(2.0));
+          expect(getResultString(result), equals('2'));
+        });
+      });
+
+      group('Multiplication/Division Left-to-Right', () {
+        test('12/3*2 should equal 8.0 (left to right)', () {
+          // Left-to-right: (12/3)*2 = 4*2 = 8
+          // NOT right-to-left: 12/(3*2) = 12/6 = 2
+          final result = useCase.execute('12/3*2');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(8.0));
+          expect(getResultString(result), equals('8'));
+          
+          // Explicitly verify it's NOT 2 (which would be wrong - right-to-left)
+          expect(getResultValue(result), isNot(equals(2.0)));
+        });
+
+        test('24/4/2 should equal 3.0 (left to right)', () {
+          // Left-to-right: (24/4)/2 = 6/2 = 3
+          // NOT right-to-left: 24/(4/2) = 24/2 = 12
+          final result = useCase.execute('24/4/2');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(3.0));
+          expect(getResultString(result), equals('3'));
+          
+          // Explicitly verify it's NOT 12 (which would be wrong - right-to-left)
+          expect(getResultValue(result), isNot(equals(12.0)));
+        });
+
+        test('2*3/2 should equal 3.0 (left to right)', () {
+          // Left-to-right: (2*3)/2 = 6/2 = 3
+          final result = useCase.execute('2*3/2');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(3.0));
+          expect(getResultString(result), equals('3'));
+        });
+
+        test('10/2*5 should equal 25.0 (left to right)', () {
+          // Left-to-right: (10/2)*5 = 5*5 = 25
+          // NOT right-to-left: 10/(2*5) = 10/10 = 1
+          final result = useCase.execute('10/2*5');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(25.0));
+          expect(getResultString(result), equals('25'));
+          
+          // Explicitly verify it's NOT 1 (which would be wrong - right-to-left)
+          expect(getResultValue(result), isNot(equals(1.0)));
+        });
+
+        test('100/10/5*2 should equal 4.0 (left to right)', () {
+          // Left-to-right: ((100/10)/5)*2 = (10/5)*2 = 2*2 = 4
+          final result = useCase.execute('100/10/5*2');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(4.0));
+          expect(getResultString(result), equals('4'));
+        });
+
+        test('8*2/4*3 should equal 12.0 (left to right)', () {
+          // Left-to-right: ((8*2)/4)*3 = (16/4)*3 = 4*3 = 12
+          final result = useCase.execute('8*2/4*3');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(12.0));
+          expect(getResultString(result), equals('12'));
+        });
+      });
+
+      group('Left-to-Right with Decimals', () {
+        test('10.0-5.5-2.5 should equal 2.0 (left to right with decimals)', () {
+          // Left-to-right: (10.0-5.5)-2.5 = 4.5-2.5 = 2.0
+          final result = useCase.execute('10.0-5.5-2.5');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(2.0));
+          expect(getResultString(result), equals('2'));
+        });
+
+        test('12.0/3.0*2.0 should equal 8.0 (left to right with decimals)', () {
+          // Left-to-right: (12.0/3.0)*2.0 = 4.0*2.0 = 8.0
+          final result = useCase.execute('12.0/3.0*2.0');
+          
+          expect(result, isA<EvaluationSuccess>());
+          expect(getResultValue(result), equals(8.0));
+          expect(getResultString(result), equals('8'));
+        });
+      });
+
+      group('Comparing Expressions - Left-to-Right vs Parentheses', () {
+        test('10-5-2 vs 10-(5-2) shows left-to-right evaluation', () {
+          final leftToRight = useCase.execute('10-5-2');
+          final withParens = useCase.execute('10-(5-2)');
+          
+          expect(getResultValue(leftToRight), equals(3.0),
+              reason: '10-5-2 should be 3 (left to right: (10-5)-2)');
+          expect(getResultValue(withParens), equals(7.0),
+              reason: '10-(5-2) should be 7 (parentheses override)');
+          expect(getResultValue(leftToRight), isNot(equals(getResultValue(withParens))),
+              reason: 'Results should differ showing left-to-right matters');
+        });
+
+        test('12/3*2 vs 12/(3*2) shows left-to-right evaluation', () {
+          final leftToRight = useCase.execute('12/3*2');
+          final withParens = useCase.execute('12/(3*2)');
+          
+          expect(getResultValue(leftToRight), equals(8.0),
+              reason: '12/3*2 should be 8 (left to right: (12/3)*2)');
+          expect(getResultValue(withParens), equals(2.0),
+              reason: '12/(3*2) should be 2 (parentheses override)');
+          expect(getResultValue(leftToRight), isNot(equals(getResultValue(withParens))),
+              reason: 'Results should differ showing left-to-right matters');
+        });
+
+        test('24/4/2 vs 24/(4/2) shows left-to-right evaluation', () {
+          final leftToRight = useCase.execute('24/4/2');
+          final withParens = useCase.execute('24/(4/2)');
+          
+          expect(getResultValue(leftToRight), equals(3.0),
+              reason: '24/4/2 should be 3 (left to right: (24/4)/2)');
+          expect(getResultValue(withParens), equals(12.0),
+              reason: '24/(4/2) should be 12 (parentheses override)');
+          expect(getResultValue(leftToRight), isNot(equals(getResultValue(withParens))),
+              reason: 'Results should differ showing left-to-right matters');
+        });
       });
     });
 
@@ -578,6 +908,38 @@ void main() {
         
         expect(result, isA<EvaluationSuccess>());
         expect(getResultValue(result), equals(3.0));
+      });
+    });
+
+    group('Complex Expressions with Exponents and All Operations', () {
+      test('2^3+4*5-10/2 should equal 23.0', () {
+        // Exponent first: 2^3 = 8
+        // Then multiplication and division: 4*5 = 20, 10/2 = 5
+        // Then left to right: 8 + 20 - 5 = 23
+        final result = useCase.execute('2^3+4*5-10/2');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(23.0));
+      });
+
+      test('(2+3)^2-10 should equal 15.0', () {
+        // Parentheses first: (2+3) = 5
+        // Then exponent: 5^2 = 25
+        // Then subtraction: 25 - 10 = 15
+        final result = useCase.execute('(2+3)^2-10');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(15.0));
+      });
+
+      test('3^2*2+1 should equal 19.0', () {
+        // Exponent first: 3^2 = 9
+        // Then multiplication: 9 * 2 = 18
+        // Then addition: 18 + 1 = 19
+        final result = useCase.execute('3^2*2+1');
+        
+        expect(result, isA<EvaluationSuccess>());
+        expect(getResultValue(result), equals(19.0));
       });
     });
   });
