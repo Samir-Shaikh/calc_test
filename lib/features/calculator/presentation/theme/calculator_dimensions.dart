@@ -6,6 +6,44 @@
 class CalculatorDimensions {
   CalculatorDimensions._();
 
+  // ==================== Screen Layout Dimensions ====================
+
+  /// Flex value for the display area (expression + result).
+  ///
+  /// This represents approximately 30% of the available screen height.
+  static const int displayAreaFlex = 3;
+
+  /// Flex value for the button grid area.
+  ///
+  /// This represents approximately 60% of the available screen height.
+  static const int buttonGridFlex = 6;
+
+  /// Horizontal padding for the entire calculator screen.
+  ///
+  /// Applied to the left and right edges of the screen content.
+  static const double screenHorizontalPadding = 0.0;
+
+  /// Vertical padding for the calculator screen.
+  ///
+  /// Applied to top and bottom of the screen content.
+  static const double screenVerticalPadding = 0.0;
+
+  // ==================== Display Area Dimensions ====================
+
+  /// Padding around the expression display area.
+  ///
+  /// Provides spacing between the display text and screen edges.
+  static const double displayPadding = 24.0;
+
+  /// Font size for the main expression text.
+  static const double expressionFontSize = 48.0;
+
+  /// Font size for the result preview text.
+  static const double resultFontSize = 32.0;
+
+  /// Spacing between expression text and result text.
+  static const double expressionResultSpacing = 8.0;
+
   // ==================== Backspace Button Dimensions ====================
 
   /// Size (width and height) of the backspace button.
@@ -23,6 +61,23 @@ class CalculatorDimensions {
   /// Provides visual separation between the backspace button row
   /// and the main calculator button grid.
   static const double backspaceButtonBottomSpacing = 8.0;
+
+  /// Top padding for the backspace button row.
+  ///
+  /// Provides visual separation between the display area
+  /// and the backspace button row.
+  static const double backspaceButtonTopSpacing = 4.0;
+
+  // ==================== Button Grid Dimensions ====================
+
+  /// Horizontal spacing between buttons in the grid.
+  static const double buttonSpacing = 12.0;
+
+  /// Vertical spacing between rows in the button grid.
+  static const double rowSpacing = 12.0;
+
+  /// Padding around the entire button grid.
+  static const double gridPadding = 16.0;
 
   // ==================== Toast Dimensions ====================
 

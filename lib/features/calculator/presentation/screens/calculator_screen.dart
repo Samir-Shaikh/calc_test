@@ -15,6 +15,11 @@ import '../widgets/calculator_toast.dart';
 /// react to evaluation errors and display toast notifications without
 /// rebuilding the widget tree.
 ///
+/// The layout is composed of three main sections:
+/// - Display area (approximately 30% of screen): Shows expression and result
+/// - Backspace button row: Right-aligned, positioned between display and grid
+/// - Button grid (approximately 60% of screen): Contains all calculator buttons
+///
 /// The screen requires an [ExpressionDisplayBloc] to be provided in the
 /// widget tree (typically via [CalculatorModule]).
 class CalculatorScreen extends StatelessWidget {
@@ -40,21 +45,27 @@ class CalculatorScreen extends StatelessWidget {
               );
             }
           },
-          child: Column(
-            children: [
-              // Expression display area
-              Expanded(
-                flex: 2,
-                child: _ExpressionDisplay(),
-              ),
-              // Backspace button row - right-aligned above button grid
-              const _BackspaceButtonRow(),
-              // Button grid area
-              Expanded(
-                flex: 3,
-                child: const CalculatorButtonGrid(),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: CalculatorDimensions.screenHorizontalPadding,
+              vertical: CalculatorDimensions.screenVerticalPadding,
+            ),
+            child: Column(
+              children: [
+                // Expression display area (approximately 30% of screen)
+                Expanded(
+                  flex: CalculatorDimensions.displayAreaFlex,
+                  child: _ExpressionDisplay(),
+                ),
+                // Backspace button row - right-aligned above button grid
+                const _BackspaceButtonRow(),
+                // Button grid area (approximately 60% of screen)
+                Expanded(
+                  flex: CalculatorDimensions.buttonGridFlex,
+                  child: const CalculatorButtonGrid(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -65,6 +76,8 @@ class CalculatorScreen extends StatelessWidget {
 /// Widget that displays the current expression and result.
 ///
 /// Uses [BlocBuilder] to rebuild only when the expression or result changes.
+/// The display is right-aligned and positioned at the bottom of its container
+/// to match the Android calculator design.
 class _ExpressionDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -72,7 +85,7 @@ class _ExpressionDisplay extends StatelessWidget {
       builder: (context, state) {
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(CalculatorDimensions.displayPadding),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -81,7 +94,7 @@ class _ExpressionDisplay extends StatelessWidget {
               Text(
                 state.displayExpression.isEmpty ? '0' : state.displayExpression,
                 style: const TextStyle(
-                  fontSize: 48,
+                  fontSize: CalculatorDimensions.expressionFontSize,
                   fontWeight: FontWeight.w300,
                   color: Colors.white,
                 ),
@@ -89,13 +102,13 @@ class _ExpressionDisplay extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: CalculatorDimensions.expressionResultSpacing),
               // Result text (if available)
               if (state.result != null)
                 Text(
                   '= ${state.result}',
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: CalculatorDimensions.resultFontSize,
                     fontWeight: FontWeight.w400,
                     color: Colors.grey.shade400,
                   ),
@@ -114,26 +127,25 @@ class _ExpressionDisplay extends StatelessWidget {
 /// Widget that displays the backspace button row above the button grid.
 ///
 /// The backspace button is right-aligned to provide easy access for
-/// deleting the last character in the expression.
+/// deleting the last character in the expression. It is positioned
+/// between the display area and the button grid with appropriate spacing.
 class _BackspaceButtonRow extends StatelessWidget {
   const _BackspaceButtonRow();
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: CalculatorDimensions.backspaceRowHorizontalPadding,
+      padding: const EdgeInsets.only(
+        left: CalculatorDimensions.backspaceRowHorizontalPadding,
+        right: CalculatorDimensions.backspaceRowHorizontalPadding,
+        top: CalculatorDimensions.backspaceButtonTopSpacing,
+        bottom: CalculatorDimensions.backspaceButtonBottomSpacing,
       ),
-      child: Padding(
-        padding: const EdgeInsets.only(
-          bottom: CalculatorDimensions.backspaceButtonBottomSpacing,
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            BackspaceButton(),
-          ],
-        ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          BackspaceButton(),
+        ],
       ),
     );
   }
