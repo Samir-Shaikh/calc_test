@@ -8,6 +8,10 @@ import 'calculator_dimensions.dart';
 /// This class provides pre-configured TextStyle instances for
 /// different text elements in the calculator UI, ensuring consistent
 /// typography across all button types and display elements.
+///
+/// All text styles use RTL-aware alignment where applicable, using
+/// [TextAlign.end] instead of [TextAlign.right] to ensure proper
+/// alignment in both LTR and RTL contexts.
 class CalculatorTypography {
   CalculatorTypography._();
 
@@ -84,6 +88,45 @@ class CalculatorTypography {
     height: 1.0,
   );
 
+  // ==================== Display Text Styles ====================
+
+  /// Text style for the main expression display.
+  ///
+  /// Features:
+  /// - Large font size for readability
+  /// - Uses RTL-aware alignment via [CalculatorDimensions.displayTextAlign]
+  ///
+  /// Note: Apply alignment at the widget level using [displayTextAlign].
+  static const TextStyle expressionTextStyle = TextStyle(
+    fontSize: CalculatorDimensions.expressionFontSize,
+    fontWeight: FontWeight.w400,
+    color: CalculatorColors.lightButtonText,
+    height: 1.2,
+  );
+
+  /// Text style for the result display.
+  ///
+  /// Features:
+  /// - Smaller than expression for visual hierarchy
+  /// - Uses a slightly muted color for secondary emphasis
+  /// - Uses RTL-aware alignment via [CalculatorDimensions.displayTextAlign]
+  ///
+  /// Note: Apply alignment at the widget level using [displayTextAlign].
+  static const TextStyle resultTextStyle = TextStyle(
+    fontSize: CalculatorDimensions.resultFontSize,
+    fontWeight: FontWeight.w400,
+    color: Colors.white70,
+    height: 1.2,
+  );
+
+  /// RTL-aware text alignment for display elements.
+  ///
+  /// Use this constant instead of [TextAlign.right] to ensure proper
+  /// alignment in both LTR and RTL contexts:
+  /// - In LTR: aligns to the right (traditional calculator display)
+  /// - In RTL: aligns to the left (respects RTL reading direction)
+  static const TextAlign displayTextAlign = CalculatorDimensions.displayTextAlign;
+
   // ==================== Semantic Aliases ====================
   // These aliases provide more specific naming for common use cases.
 
@@ -149,6 +192,29 @@ class CalculatorTypography {
       fontWeight: fontWeight,
       color: color,
       height: 1.0,
+    );
+  }
+
+  /// Creates a display text style with RTL-aware alignment.
+  ///
+  /// This factory method creates a TextStyle suitable for display elements
+  /// with the specified parameters. The returned style should be used with
+  /// [displayTextAlign] for proper RTL support.
+  ///
+  /// Parameters:
+  /// - [fontSize]: The font size for the text
+  /// - [color]: The text color
+  /// - [fontWeight]: The font weight (defaults to w400)
+  static TextStyle displayTextStyleCustom({
+    required double fontSize,
+    required Color color,
+    FontWeight fontWeight = FontWeight.w400,
+  }) {
+    return TextStyle(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: 1.2,
     );
   }
 }

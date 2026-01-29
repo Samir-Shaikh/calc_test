@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Dimension constants for the calculator UI.
 ///
 /// This class defines all the dimensions, sizes, and spacing values
@@ -187,4 +189,34 @@ class CalculatorDimensions {
   /// Matches Android's Toast.LENGTH_LONG behavior (approximately 3.5 seconds).
   /// Use this for messages that require more reading time.
   static const Duration toastDurationLong = Duration(milliseconds: 3500);
+
+  // ==================== RTL-Aware Alignment Constants ====================
+  //
+  // These constants provide directional text alignment that automatically
+  // adapts to the current text direction (LTR or RTL). Use these instead
+  // of absolute alignment values (left/right) to ensure proper UI layout
+  // in both directions.
+
+  /// RTL-aware alignment for the end of text.
+  ///
+  /// Use this instead of [TextAlign.right] for text that should align to:
+  /// - Right edge in LTR languages (English, etc.)
+  /// - Left edge in RTL languages (Arabic, Hebrew, etc.)
+  ///
+  /// This is the preferred alignment for calculator display text (expression
+  /// and result) as it respects the user's language direction.
+  static const TextAlign displayTextAlign = TextAlign.end;
+
+  /// RTL-aware alignment for the start of text.
+  ///
+  /// Use this instead of [TextAlign.left] for text that should align to:
+  /// - Left edge in LTR languages (English, etc.)
+  /// - Right edge in RTL languages (Arabic, Hebrew, etc.)
+  static const TextAlign displayTextAlignStart = TextAlign.start;
+
+  /// Center alignment for text.
+  ///
+  /// This alignment is direction-independent and centers text horizontally.
+  /// Use this for button labels and centered content.
+  static const TextAlign buttonTextAlign = TextAlign.center;
 }
