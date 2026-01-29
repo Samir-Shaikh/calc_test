@@ -31,6 +31,272 @@ void main() {
       });
     });
 
+    group('power operator - exponentiation', () {
+      group('basic power operations', () {
+        test('evaluates 2^3 = 8', () {
+          expect(useCase.execute('2^3'), equals('8'));
+        });
+
+        test('evaluates 3^2 = 9', () {
+          expect(useCase.execute('3^2'), equals('9'));
+        });
+
+        test('evaluates 5^2 = 25', () {
+          expect(useCase.execute('5^2'), equals('25'));
+        });
+
+        test('evaluates 10^3 = 1000', () {
+          expect(useCase.execute('10^3'), equals('1000'));
+        });
+
+        test('evaluates 2^10 = 1024', () {
+          expect(useCase.execute('2^10'), equals('1024'));
+        });
+      });
+
+      group('zero exponent - x^0 = 1', () {
+        test('evaluates 2^0 = 1', () {
+          expect(useCase.execute('2^0'), equals('1'));
+        });
+
+        test('evaluates 5^0 = 1', () {
+          expect(useCase.execute('5^0'), equals('1'));
+        });
+
+        test('evaluates 100^0 = 1', () {
+          expect(useCase.execute('100^0'), equals('1'));
+        });
+
+        test('evaluates 1^0 = 1', () {
+          expect(useCase.execute('1^0'), equals('1'));
+        });
+      });
+
+      group('exponent of 1', () {
+        test('evaluates 2^1 = 2', () {
+          expect(useCase.execute('2^1'), equals('2'));
+        });
+
+        test('evaluates 10^1 = 10', () {
+          expect(useCase.execute('10^1'), equals('10'));
+        });
+      });
+
+      group('zero base', () {
+        test('evaluates 0^2 = 0', () {
+          expect(useCase.execute('0^2'), equals('0'));
+        });
+
+        test('evaluates 0^5 = 0', () {
+          expect(useCase.execute('0^5'), equals('0'));
+        });
+
+        test('evaluates 0^1 = 0', () {
+          expect(useCase.execute('0^1'), equals('0'));
+        });
+
+        test('evaluates 0^0 = 1 (mathematical convention)', () {
+          // In most mathematical contexts and programming languages, 0^0 = 1
+          expect(useCase.execute('0^0'), equals('1'));
+        });
+      });
+
+      group('fractional exponents - roots', () {
+        test('evaluates 4^0.5 = 2 (square root of 4)', () {
+          expect(useCase.execute('4^0.5'), equals('2'));
+        });
+
+        test('evaluates 9^0.5 = 3 (square root of 9)', () {
+          expect(useCase.execute('9^0.5'), equals('3'));
+        });
+
+        test('evaluates 8^0.5 (square root of 8)', () {
+          final result = double.parse(useCase.execute('8^0.5'));
+          expect(result, closeTo(2.8284271247461903, 0.0001));
+        });
+
+        test('evaluates 27^0.333333 (approximate cube root of 27)', () {
+          final result = double.parse(useCase.execute('27^0.333333'));
+          expect(result, closeTo(3.0, 0.001));
+        });
+
+        test('evaluates 16^0.25 = 2 (fourth root of 16)', () {
+          expect(useCase.execute('16^0.25'), equals('2'));
+        });
+      });
+
+      group('negative exponents', () {
+        test('evaluates 2^-1 = 0.5', () {
+          expect(useCase.execute('2^-1'), equals('0.5'));
+        });
+
+        test('evaluates 2^-2 = 0.25', () {
+          expect(useCase.execute('2^-2'), equals('0.25'));
+        });
+
+        test('evaluates 10^-1 = 0.1', () {
+          expect(useCase.execute('10^-1'), equals('0.1'));
+        });
+
+        test('evaluates 4^-0.5 = 0.5', () {
+          expect(useCase.execute('4^-0.5'), equals('0.5'));
+        });
+      });
+
+      group('chained powers - right associativity', () {
+        test('evaluates 2^3^2 = 512 (right-to-left: 2^(3^2) = 2^9)', () {
+          // Power is right-associative: 2^3^2 = 2^(3^2) = 2^9 = 512
+          // NOT (2^3)^2 = 8^2 = 64
+          expect(useCase.execute('2^3^2'), equals('512'));
+        });
+
+        test('evaluates 2^2^3 = 256 (right-to-left: 2^(2^3) = 2^8)', () {
+          expect(useCase.execute('2^2^3'), equals('256'));
+        });
+
+        test('evaluates 3^2^1 = 9 (right-to-left: 3^(2^1) = 3^2)', () {
+          expect(useCase.execute('3^2^1'), equals('9'));
+        });
+      });
+
+      group('power operator precedence', () {
+        test('power has higher precedence than multiplication: 2*3^2 = 18', () {
+          // 3^2 = 9, then 2*9 = 18
+          expect(useCase.execute('2*3^2'), equals('18'));
+        });
+
+        test('power has higher precedence than division: 8/2^2 = 2', () {
+          // 2^2 = 4, then 8/4 = 2
+          expect(useCase.execute('8/2^2'), equals('2'));
+        });
+
+        test('power has higher precedence than addition: 1+2^3 = 9', () {
+          // 2^3 = 8, then 1+8 = 9
+          expect(useCase.execute('1+2^3'), equals('9'));
+        });
+
+        test('power has higher precedence than subtraction: 10-2^3 = 2', () {
+          // 2^3 = 8, then 10-8 = 2
+          expect(useCase.execute('10-2^3'), equals('2'));
+        });
+
+        test('complex expression: 2+3*4^2 = 50', () {
+          // 4^2 = 16, 3*16 = 48, 2+48 = 50
+          expect(useCase.execute('2+3*4^2'), equals('50'));
+        });
+
+        test('complex expression: 2^3+4*5 = 28', () {
+          // 2^3 = 8, 4*5 = 20, 8+20 = 28
+          expect(useCase.execute('2^3+4*5'), equals('28'));
+        });
+      });
+
+      group('power with parentheses', () {
+        test('evaluates (2+3)^2 = 25', () {
+          expect(useCase.execute('(2+3)^2'), equals('25'));
+        });
+
+        test('evaluates 2^(3+1) = 16', () {
+          expect(useCase.execute('2^(3+1)'), equals('16'));
+        });
+
+        test('evaluates (2^3)^2 = 64', () {
+          // Parentheses override right-associativity
+          expect(useCase.execute('(2^3)^2'), equals('64'));
+        });
+
+        test('evaluates (1+1)^(2+1) = 8', () {
+          // (1+1) = 2, (2+1) = 3, 2^3 = 8
+          expect(useCase.execute('(1+1)^(2+1)'), equals('8'));
+        });
+
+        test('evaluates ((2+1)^2)*2 = 18', () {
+          // (2+1) = 3, 3^2 = 9, 9*2 = 18
+          expect(useCase.execute('((2+1)^2)*2'), equals('18'));
+        });
+
+        test('evaluates 2*((3+1)^2) = 32', () {
+          // (3+1) = 4, 4^2 = 16, 2*16 = 32
+          expect(useCase.execute('2*((3+1)^2)'), equals('32'));
+        });
+      });
+
+      group('power with decimals', () {
+        test('evaluates 1.5^2 = 2.25', () {
+          expect(useCase.execute('1.5^2'), equals('2.25'));
+        });
+
+        test('evaluates 2.5^2 = 6.25', () {
+          expect(useCase.execute('2.5^2'), equals('6.25'));
+        });
+
+        test('evaluates 2^1.5', () {
+          final result = double.parse(useCase.execute('2^1.5'));
+          expect(result, closeTo(2.8284271247461903, 0.0001));
+        });
+
+        test('evaluates 1.5^1.5', () {
+          final result = double.parse(useCase.execute('1.5^1.5'));
+          expect(result, closeTo(1.8371173070873836, 0.0001));
+        });
+      });
+
+      group('power with negative bases', () {
+        test('evaluates (-2)^2 = 4', () {
+          expect(useCase.execute('(-2)^2'), equals('4'));
+        });
+
+        test('evaluates (-2)^3 = -8', () {
+          expect(useCase.execute('(-2)^3'), equals('-8'));
+        });
+
+        test('evaluates (-3)^2 = 9', () {
+          expect(useCase.execute('(-3)^2'), equals('9'));
+        });
+
+        test('evaluates (-1)^0 = 1', () {
+          expect(useCase.execute('(-1)^0'), equals('1'));
+        });
+      });
+
+      group('power mixed with other operators', () {
+        test('evaluates 2^3*2^2 = 32', () {
+          // 2^3 = 8, 2^2 = 4, 8*4 = 32
+          expect(useCase.execute('2^3*2^2'), equals('32'));
+        });
+
+        test('evaluates 2^3+2^2 = 12', () {
+          // 2^3 = 8, 2^2 = 4, 8+4 = 12
+          expect(useCase.execute('2^3+2^2'), equals('12'));
+        });
+
+        test('evaluates 2^3-2^2 = 4', () {
+          // 2^3 = 8, 2^2 = 4, 8-4 = 4
+          expect(useCase.execute('2^3-2^2'), equals('4'));
+        });
+
+        test('evaluates 2^3/2^2 = 2', () {
+          // 2^3 = 8, 2^2 = 4, 8/4 = 2
+          expect(useCase.execute('2^3/2^2'), equals('2'));
+        });
+
+        test('evaluates 10-3^2+2 = 3', () {
+          // 3^2 = 9, 10-9 = 1, 1+2 = 3
+          expect(useCase.execute('10-3^2+2'), equals('3'));
+        });
+      });
+
+      group('large power results', () {
+        test('evaluates 2^20 = 1048576', () {
+          expect(useCase.execute('2^20'), equals('1048576'));
+        });
+
+        test('evaluates 10^6 = 1000000', () {
+          expect(useCase.execute('10^6'), equals('1000000'));
+        });
+      });
+    });
+
     group('division by zero - AC4 compliance', () {
       test('division by zero returns Infinity', () {
         final result = useCase.execute('10/0');

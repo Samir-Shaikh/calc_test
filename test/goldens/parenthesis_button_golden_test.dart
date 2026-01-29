@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/theme/calculator_button_decorations.dart';
@@ -10,12 +12,18 @@ import 'package:android_calculator_flutter/features/calculator/presentation/widg
 
 void main() {
   late InsertParenthesisUseCase insertParenthesisUseCase;
+  late InsertOperatorUseCase insertOperatorUseCase;
+  late EvaluateExpressionUseCase evaluateExpressionUseCase;
   late ExpressionDisplayBloc bloc;
 
   setUp(() {
     insertParenthesisUseCase = InsertParenthesisUseCase();
+    insertOperatorUseCase = InsertOperatorUseCase();
+    evaluateExpressionUseCase = EvaluateExpressionUseCase();
     bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: insertParenthesisUseCase,
+      insertOperatorUseCase: insertOperatorUseCase,
+      evaluateExpressionUseCase: evaluateExpressionUseCase,
     );
   });
 

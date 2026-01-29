@@ -1,8 +1,8 @@
 import 'package:android_calculator_flutter/app/di/calculator_module.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/evaluate_expression_use_case.dart';
+import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_operator_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
-import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_event.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/blocs/expression_display/expression_display_state.dart';
 import 'package:android_calculator_flutter/features/calculator/presentation/widgets/calculator_button_grid.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +29,9 @@ class TestApp extends StatelessWidget {
   /// Optional custom InsertParenthesisUseCase for testing.
   final InsertParenthesisUseCase? insertParenthesisUseCase;
 
+  /// Optional custom InsertOperatorUseCase for testing.
+  final InsertOperatorUseCase? insertOperatorUseCase;
+
   /// Optional custom EvaluateExpressionUseCase for testing.
   final EvaluateExpressionUseCase? evaluateExpressionUseCase;
 
@@ -36,6 +39,7 @@ class TestApp extends StatelessWidget {
     super.key,
     required this.child,
     this.insertParenthesisUseCase,
+    this.insertOperatorUseCase,
     this.evaluateExpressionUseCase,
   });
 
@@ -50,6 +54,7 @@ class TestApp extends StatelessWidget {
       ),
       home: CalculatorModule(
         insertParenthesisUseCase: insertParenthesisUseCase,
+        insertOperatorUseCase: insertOperatorUseCase,
         evaluateExpressionUseCase: evaluateExpressionUseCase,
         child: child,
       ),
@@ -133,16 +138,19 @@ class _CalculatorTestScreen extends StatefulWidget {
 
 class _CalculatorTestScreenState extends State<_CalculatorTestScreen> {
   late final InsertParenthesisUseCase _insertParenthesisUseCase;
+  late final InsertOperatorUseCase _insertOperatorUseCase;
   late final EvaluateExpressionUseCase _evaluateExpressionUseCase;
-  late final _EvaluatingExpressionDisplayBloc _bloc;
+  late final ExpressionDisplayBloc _bloc;
 
   @override
   void initState() {
     super.initState();
     _insertParenthesisUseCase = InsertParenthesisUseCase();
+    _insertOperatorUseCase = InsertOperatorUseCase();
     _evaluateExpressionUseCase = EvaluateExpressionUseCase();
-    _bloc = _EvaluatingExpressionDisplayBloc(
+    _bloc = ExpressionDisplayBloc(
       insertParenthesisUseCase: _insertParenthesisUseCase,
+      insertOperatorUseCase: _insertOperatorUseCase,
       evaluateExpressionUseCase: _evaluateExpressionUseCase,
     );
   }
@@ -206,38 +214,5 @@ class _CalculatorTestScreenState extends State<_CalculatorTestScreen> {
         ),
       ),
     );
-  }
-}
-
-/// Extended BLoC that includes expression evaluation on equals press.
-///
-/// This BLoC extends [ExpressionDisplayBloc] to add evaluation functionality
-/// using [EvaluateExpressionUseCase] when the equals button is pressed.
-class _EvaluatingExpressionDisplayBloc extends ExpressionDisplayBloc {
-  final EvaluateExpressionUseCase _evaluateExpressionUseCase;
-
-  _EvaluatingExpressionDisplayBloc({
-    required super.insertParenthesisUseCase,
-    required EvaluateExpressionUseCase evaluateExpressionUseCase,
-  }) : _evaluateExpressionUseCase = evaluateExpressionUseCase {
-    // Register handler for equals pressed with evaluation
-    on<EqualsPressed>(_onEqualsPressedWithEvaluation);
-  }
-
-  void _onEqualsPressedWithEvaluation(
-    EqualsPressed event,
-    Emitter<ExpressionDisplayState> emit,
-  ) {
-    final expression = state.expression.value;
-    if (expression.isEmpty) {
-      return;
-    }
-
-    final result = _evaluateExpressionUseCase.execute(expression);
-    emit(state.copyWith(
-      result: result,
-      hasError: result == 'Error',
-      errorMessage: result == 'Error' ? 'Invalid expression' : null,
-    ));
   }
 }

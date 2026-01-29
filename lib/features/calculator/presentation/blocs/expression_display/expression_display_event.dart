@@ -58,6 +58,17 @@ class OperatorPressed extends ExpressionDisplayEvent {
   String toString() => 'OperatorPressed(operator: $operator)';
 }
 
+/// Event triggered when the power operator button is pressed.
+///
+/// This event triggers the insertion of '^' into the expression
+/// for exponentiation operations.
+class PowerOperatorPressed extends ExpressionDisplayEvent {
+  const PowerOperatorPressed();
+
+  @override
+  String toString() => 'PowerOperatorPressed()';
+}
+
 /// Event triggered when the parenthesis button is pressed.
 ///
 /// This event triggers the toggle logic for inserting the appropriate

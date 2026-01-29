@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/calculator/domain/usecases/evaluate_expression_use_case.dart';
+import '../../features/calculator/domain/usecases/insert_operator_use_case.dart';
 import '../../features/calculator/domain/usecases/insert_parenthesis_use_case.dart';
 import '../../features/calculator/presentation/blocs/expression_display/expression_display_bloc.dart';
 
@@ -23,6 +24,9 @@ class CalculatorModule extends StatelessWidget {
   /// Optional InsertParenthesisUseCase for testing.
   final InsertParenthesisUseCase? insertParenthesisUseCase;
 
+  /// Optional InsertOperatorUseCase for testing.
+  final InsertOperatorUseCase? insertOperatorUseCase;
+
   /// Optional EvaluateExpressionUseCase for testing.
   final EvaluateExpressionUseCase? evaluateExpressionUseCase;
 
@@ -30,6 +34,7 @@ class CalculatorModule extends StatelessWidget {
     super.key,
     required this.child,
     this.insertParenthesisUseCase,
+    this.insertOperatorUseCase,
     this.evaluateExpressionUseCase,
   });
 
@@ -38,6 +43,8 @@ class CalculatorModule extends StatelessWidget {
     // Create use case instances (or use provided ones for testing)
     final insertParenthesis =
         insertParenthesisUseCase ?? InsertParenthesisUseCase();
+    final insertOperator =
+        insertOperatorUseCase ?? InsertOperatorUseCase();
     final evaluateExpression =
         evaluateExpressionUseCase ?? EvaluateExpressionUseCase();
 
@@ -45,6 +52,9 @@ class CalculatorModule extends StatelessWidget {
       providers: [
         RepositoryProvider<InsertParenthesisUseCase>.value(
           value: insertParenthesis,
+        ),
+        RepositoryProvider<InsertOperatorUseCase>.value(
+          value: insertOperator,
         ),
         RepositoryProvider<EvaluateExpressionUseCase>.value(
           value: evaluateExpression,
@@ -55,6 +65,8 @@ class CalculatorModule extends StatelessWidget {
           BlocProvider<ExpressionDisplayBloc>(
             create: (context) => ExpressionDisplayBloc(
               insertParenthesisUseCase: insertParenthesis,
+              insertOperatorUseCase: insertOperator,
+              evaluateExpressionUseCase: evaluateExpression,
             ),
           ),
         ],
@@ -69,6 +81,10 @@ extension CalculatorDependencies on BuildContext {
   /// Gets the InsertParenthesisUseCase from the context.
   InsertParenthesisUseCase get insertParenthesisUseCase =>
       read<InsertParenthesisUseCase>();
+
+  /// Gets the InsertOperatorUseCase from the context.
+  InsertOperatorUseCase get insertOperatorUseCase =>
+      read<InsertOperatorUseCase>();
 
   /// Gets the EvaluateExpressionUseCase from the context.
   EvaluateExpressionUseCase get evaluateExpressionUseCase =>
