@@ -710,5 +710,411 @@ void main() {
         );
       });
     });
+
+    group('NegatePressed cursor position handling (AC1, AC3)', () {
+      test('AC1: given expression "5" with cursor at end, when NegatePressed is added, then minus is inserted at start', () async {
+        // AC1: Inserting '-' at cursor position in existing expression
+        bloc.add(const NumericPressed('5'));
+        bloc.add(const NegatePressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '5' &&
+                  state.expression.cursorPosition == 1,
+              'initial state: "5" with cursor at 1',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '-5' &&
+                  state.expression.cursorPosition == 2,
+              'after negate: "-5" with cursor adjusted to 2',
+            ),
+          ]),
+        );
+      });
+
+      test('AC3: given empty expression, when NegatePressed is added, then minus appears and cursor is at position 1', () async {
+        // AC3: '-' appears in empty expression
+        bloc.add(const NegatePressed());
+
+        await expectLater(
+          bloc.stream,
+          emits(predicate<ExpressionDisplayState>(
+            (state) =>
+                state.expression.value == '-' &&
+                state.expression.cursorPosition == 1,
+            'empty expression becomes "-" with cursor at 1',
+          )),
+        );
+      });
+
+      test('given multi-digit number "123" with cursor at end, cursor position adjusts correctly after negate', () async {
+        bloc.add(const NumericPressed('1'));
+        bloc.add(const NumericPressed('2'));
+        bloc.add(const NumericPressed('3'));
+        bloc.add(const NegatePressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.cursorPosition == 1,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.cursorPosition == 2,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '123' &&
+                  state.expression.cursorPosition == 3,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '-123' &&
+                  state.expression.cursorPosition == 4,
+              'cursor moves forward by 1 when minus is inserted',
+            ),
+          ]),
+        );
+      });
+
+      test('given negated number "-5", when toggled back, cursor position adjusts correctly', () async {
+        bloc.add(const NumericPressed('5'));
+        bloc.add(const NegatePressed()); // -5, cursor at 2
+        bloc.add(const NegatePressed()); // 5, cursor at 1
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '5' &&
+                  state.expression.cursorPosition == 1,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '-5' &&
+                  state.expression.cursorPosition == 2,
+              'negate adds minus and cursor moves to 2',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '5' &&
+                  state.expression.cursorPosition == 1,
+              'un-negate removes minus and cursor moves back to 1',
+            ),
+          ]),
+        );
+      });
+
+      test('given expression "3+5" with cursor after second number, negate inserts at start of second number', () async {
+        bloc.add(const NumericPressed('3'));
+        bloc.add(const OperatorPressed('+'));
+        bloc.add(const NumericPressed('5'));
+        bloc.add(const NegatePressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.cursorPosition == 1,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.cursorPosition == 2,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '3+5' &&
+                  state.expression.cursorPosition == 3,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '3+-5' &&
+                  state.expression.cursorPosition == 4,
+              'minus inserted before 5, cursor adjusted',
+            ),
+          ]),
+        );
+      });
+
+      test('given expression "5+" with cursor after operator, negate inserts minus at cursor position', () async {
+        bloc.add(const NumericPressed('5'));
+        bloc.add(const OperatorPressed('+'));
+        bloc.add(const NegatePressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.cursorPosition == 1,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '5+' &&
+                  state.expression.cursorPosition == 2,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '5+-' &&
+                  state.expression.cursorPosition == 3,
+              'minus inserted at cursor after operator',
+            ),
+          ]),
+        );
+      });
+
+      test('given expression "(" with cursor inside, negate inserts minus', () async {
+        bloc.add(const ParenthesisPressed());
+        bloc.add(const NegatePressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '(' &&
+                  state.expression.cursorPosition == 1,
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '(-' &&
+                  state.expression.cursorPosition == 2,
+              'minus inserted after open paren',
+            ),
+          ]),
+        );
+      });
+    });
+
+    group('NegatePressed with various operators', () {
+      test('given expression with division "10÷", negate inserts minus correctly', () async {
+        bloc.add(const NumericPressed('1'));
+        bloc.add(const NumericPressed('0'));
+        bloc.add(const OperatorPressed('÷'));
+        bloc.add(const NegatePressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '1',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '10',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '10÷',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '10÷-' &&
+                  state.expression.cursorPosition == 4,
+              'minus inserted after division operator',
+            ),
+          ]),
+        );
+      });
+
+      test('given expression with subtraction "8-", negate inserts minus for double negative', () async {
+        bloc.add(const NumericPressed('8'));
+        bloc.add(const OperatorPressed('-'));
+        bloc.add(const NegatePressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '8',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '8-',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '8--' &&
+                  state.expression.cursorPosition == 3,
+              'second minus inserted after subtraction operator',
+            ),
+          ]),
+        );
+      });
+    });
+
+    group('NegatePressed complete expression evaluation', () {
+      // Note: The current validator treats expressions with certain operator-minus 
+      // combinations as invalid consecutive operators.
+      // This test verifies that the BLoC correctly propagates the validation error.
+      test('expression "5+-3" results in validation error due to consecutive operators', () async {
+        bloc.add(const NumericPressed('5'));
+        bloc.add(const OperatorPressed('+'));
+        bloc.add(const NegatePressed());
+        bloc.add(const NumericPressed('3'));
+        bloc.add(const EqualsPressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '5',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '5+',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '5+-',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '5+-3',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '5+-3' &&
+                  state.hasError == true &&
+                  state.isEvaluationError == true,
+              'should show error for consecutive operators',
+            ),
+          ]),
+        );
+      });
+
+      test('expression with negated first operand "-5+3" evaluates to "-2"', () async {
+        bloc.add(const NegatePressed());
+        bloc.add(const NumericPressed('5'));
+        bloc.add(const OperatorPressed('+'));
+        bloc.add(const NumericPressed('3'));
+        bloc.add(const EqualsPressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '-',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '-5',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '-5+',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '-5+3',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '-5+3' &&
+                  state.result == '-2',
+              'result should be "-2" for -5+3',
+            ),
+          ]),
+        );
+      });
+
+      test('expression "-10×2" evaluates to "-20"', () async {
+        bloc.add(const NegatePressed());
+        bloc.add(const NumericPressed('1'));
+        bloc.add(const NumericPressed('0'));
+        bloc.add(const OperatorPressed('×'));
+        bloc.add(const NumericPressed('2'));
+        bloc.add(const EqualsPressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '-',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '-1',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '-10',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '-10×',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '-10×2',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '-10×2' &&
+                  state.result == '-20',
+              'result should be "-20" for -10×2',
+            ),
+          ]),
+        );
+      });
+
+      // Note: The current validator treats "×-" as invalid consecutive operators.
+      // This test verifies that the BLoC correctly propagates the validation error.
+      test('expression "5×-2" results in validation error due to consecutive operators', () async {
+        bloc.add(const NumericPressed('5'));
+        bloc.add(const OperatorPressed('×'));
+        bloc.add(const NegatePressed());
+        bloc.add(const NumericPressed('2'));
+        bloc.add(const EqualsPressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '5',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '5×',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '5×-',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '5×-2',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '5×-2' &&
+                  state.hasError == true &&
+                  state.isEvaluationError == true,
+              'should show error for consecutive operators ×-',
+            ),
+          ]),
+        );
+      });
+
+      // The validator allows ^- for negative exponents
+      test('expression "2^-1" evaluates to "0.5"', () async {
+        bloc.add(const NumericPressed('2'));
+        bloc.add(const PowerOperatorPressed());
+        bloc.add(const NegatePressed());
+        bloc.add(const NumericPressed('1'));
+        bloc.add(const EqualsPressed());
+
+        await expectLater(
+          bloc.stream,
+          emitsInOrder([
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '2',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '2^',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '2^-',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) => state.expression.value == '2^-1',
+            ),
+            predicate<ExpressionDisplayState>(
+              (state) =>
+                  state.expression.value == '2^-1' &&
+                  state.result == '0.5',
+              'result should be "0.5" for 2^-1',
+            ),
+          ]),
+        );
+      });
+    });
   });
 }
