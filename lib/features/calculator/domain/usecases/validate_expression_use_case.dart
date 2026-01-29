@@ -4,17 +4,34 @@ import '../entities/validation_result.dart';
 /// 
 /// This use case checks for common expression errors such as:
 /// - Empty expressions
-/// - Consecutive operators (e.g., '++', '--', '*/', etc.)
+/// - Consecutive operators (e.g., '++', '--', '*/', '+-', '-+', '*+', '/+', etc.)
 /// - Expressions starting with invalid operators
 /// - Expressions ending with operators
 /// - Unbalanced parentheses
 /// - Invalid operator positioning
 class ValidateExpressionUseCase {
   /// Regex pattern for detecting invalid consecutive operator combinations.
-  /// Matches patterns like: ++, --, +-, -+, */, /*, etc.
+  /// Matches patterns like: ++, --, +-, -+, */, /*, *+, /+, +*, +/, -*, -/, /*, *-, /-, etc.
   /// Note: Allows ^- for negative exponents (e.g., 2^-1)
   static final RegExp _consecutiveOperatorsPattern = RegExp(
-    r'[+\-][+\-]|[+\-*/×÷^]{3,}|[*/×÷][+\-*/×÷^]|[+\-][*/×÷^]|\^[+*/×÷^]'
+    r'(\+\+|--|' // ++ and --
+    r'\+\-|\-\+|' // +- and -+
+    r'\*\/|\/\*|' // */ and /*
+    r'\*\+|\/\+|' // *+ and /+
+    r'\+\*|\+\/|' // +* and +/
+    r'\-\*|\-\/|' // -* and -/
+    r'\*\-|\/\-|' // *- and /-
+    r'\*\*|\/\/|' // ** and //
+    r'×\/|\/×|' // ×/ and /×
+    r'×\+|÷\+|' // ×+ and ÷+
+    r'\+×|\+÷|' // +× and +÷
+    r'\-×|\-÷|' // -× and -÷
+    r'×\-|÷\-|' // ×- and ÷-
+    r'××|÷÷|' // ×× and ÷÷
+    r'×÷|÷×|' // ×÷ and ÷×
+    r'\^[+*/×÷^]|' // ^+ ^* ^/ ^× ^÷ ^^ (but ^- is allowed for negative exponents)
+    r'[+\-*/×÷]\^(?!\-)|' // operators before ^ (except when ^- which is negative exponent)
+    r'[+\-*/×÷^]{3,})' // three or more consecutive operators
   );
   
   /// Regex pattern for detecting expression ending with an operator.
@@ -48,50 +65,74 @@ class ValidateExpressionUseCase {
   /// 
   /// Takes an [expression] string and validates it against all rules.
   /// Returns [ValidationSuccess] if valid, or [ValidationFailure] with
-  /// a descriptive error message if invalid.
+  /// a descriptive error message and error type if invalid.
   ValidationResult execute(String expression) {
     // Trim whitespace for validation
     final trimmed = expression.trim();
     
     // Check for empty expression
     if (trimmed.isEmpty) {
-      return const ValidationFailure('Expression cannot be empty');
+      return const ValidationFailure(
+        'Expression cannot be empty',
+        type: ValidationErrorType.emptyExpression,
+      );
     }
     
     // Check for expression starting with invalid operators
     if (_startsWithInvalidOperator(trimmed)) {
-      return const ValidationFailure('Expression cannot start with an operator');
+      return const ValidationFailure(
+        'Expression cannot start with an operator',
+        type: ValidationErrorType.startsWithOperator,
+      );
     }
     
     // Check for expression ending with an operator
     if (_endsWithOperator(trimmed)) {
-      return const ValidationFailure('Expression cannot end with an operator');
+      return const ValidationFailure(
+        'Expression cannot end with an operator',
+        type: ValidationErrorType.endsWithOperator,
+      );
     }
     
     // Check for consecutive operators
     if (_hasConsecutiveOperators(trimmed)) {
-      return const ValidationFailure('Invalid consecutive operators');
+      return const ValidationFailure(
+        'Invalid consecutive operators',
+        type: ValidationErrorType.consecutiveOperators,
+      );
     }
     
     // Check for unbalanced parentheses
     final parenthesesResult = _validateParentheses(trimmed);
     if (parenthesesResult != null) {
-      return ValidationFailure(parenthesesResult);
+      return ValidationFailure(
+        parenthesesResult,
+        type: ValidationErrorType.unmatchedParenthesis,
+      );
     }
     
     // Check for empty parentheses
     if (_hasEmptyParentheses(trimmed)) {
-      return const ValidationFailure('Empty parentheses are not allowed');
+      return const ValidationFailure(
+        'Empty parentheses are not allowed',
+        type: ValidationErrorType.emptyParentheses,
+      );
     }
     
     // Check for operator after opening parenthesis (except unary minus)
     if (_hasOperatorAfterOpenParen(trimmed)) {
-      return const ValidationFailure('Invalid operator after opening parenthesis');
+      return const ValidationFailure(
+        'Invalid operator after opening parenthesis',
+        type: ValidationErrorType.operatorAfterOpenParen,
+      );
     }
     
     // Check for operator before closing parenthesis
     if (_hasOperatorBeforeCloseParen(trimmed)) {
-      return const ValidationFailure('Invalid operator before closing parenthesis');
+      return const ValidationFailure(
+        'Invalid operator before closing parenthesis',
+        type: ValidationErrorType.operatorBeforeCloseParen,
+      );
     }
     
     // All validations passed
@@ -110,6 +151,15 @@ class ValidateExpressionUseCase {
   }
   
   /// Checks for invalid consecutive operator combinations.
+  /// 
+  /// Detects patterns like:
+  /// - '++', '--', '**', '//'
+  /// - '+-', '-+', '*/', '/*'
+  /// - '*+', '/+', '+*', '+/'
+  /// - '-*', '-/', '*-', '/-'
+  /// - And their unicode equivalents (×, ÷)
+  /// 
+  /// Note: Allows '^-' for negative exponents (e.g., 2^-1)
   bool _hasConsecutiveOperators(String expression) {
     return _consecutiveOperatorsPattern.hasMatch(expression);
   }

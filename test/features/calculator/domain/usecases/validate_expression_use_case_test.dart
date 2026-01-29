@@ -15,6 +15,7 @@ void main() {
         const success = ValidationSuccess();
         expect(success.isValid, isTrue);
         expect(success.errorMessage, isNull);
+        expect(success.errorType, isNull);
       });
 
       test('ValidationFailure has correct properties', () {
@@ -22,6 +23,19 @@ void main() {
         expect(failure.isValid, isFalse);
         expect(failure.errorMessage, equals('Test error'));
         expect(failure.message, equals('Test error'));
+        expect(failure.type, equals(ValidationErrorType.invalidSyntax));
+        expect(failure.errorType, equals(ValidationErrorType.invalidSyntax));
+      });
+
+      test('ValidationFailure with custom error type has correct properties', () {
+        const failure = ValidationFailure(
+          'Consecutive operators',
+          type: ValidationErrorType.consecutiveOperators,
+        );
+        expect(failure.isValid, isFalse);
+        expect(failure.errorMessage, equals('Consecutive operators'));
+        expect(failure.type, equals(ValidationErrorType.consecutiveOperators));
+        expect(failure.errorType, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('ValidationSuccess equality works correctly', () {
@@ -39,6 +53,24 @@ void main() {
         expect(failure1, isNot(equals(failure3)));
       });
 
+      test('ValidationFailure equality considers error type', () {
+        const failure1 = ValidationFailure(
+          'error',
+          type: ValidationErrorType.consecutiveOperators,
+        );
+        const failure2 = ValidationFailure(
+          'error',
+          type: ValidationErrorType.consecutiveOperators,
+        );
+        const failure3 = ValidationFailure(
+          'error',
+          type: ValidationErrorType.invalidSyntax,
+        );
+
+        expect(failure1, equals(failure2));
+        expect(failure1, isNot(equals(failure3)));
+      });
+
       test('ValidationSuccess toString returns correct format', () {
         const success = ValidationSuccess();
         expect(success.toString(), equals('ValidationSuccess()'));
@@ -46,7 +78,35 @@ void main() {
 
       test('ValidationFailure toString returns correct format', () {
         const failure = ValidationFailure('Test error');
-        expect(failure.toString(), equals('ValidationFailure(Test error)'));
+        expect(
+          failure.toString(),
+          equals('ValidationFailure(Test error, type: ValidationErrorType.invalidSyntax)'),
+        );
+      });
+
+      test('ValidationFailure toString includes custom error type', () {
+        const failure = ValidationFailure(
+          'Consecutive operators',
+          type: ValidationErrorType.consecutiveOperators,
+        );
+        expect(
+          failure.toString(),
+          equals('ValidationFailure(Consecutive operators, type: ValidationErrorType.consecutiveOperators)'),
+        );
+      });
+    });
+
+    group('ValidationErrorType enum', () {
+      test('has all expected error types', () {
+        expect(ValidationErrorType.values, contains(ValidationErrorType.consecutiveOperators));
+        expect(ValidationErrorType.values, contains(ValidationErrorType.unmatchedParenthesis));
+        expect(ValidationErrorType.values, contains(ValidationErrorType.invalidSyntax));
+        expect(ValidationErrorType.values, contains(ValidationErrorType.emptyExpression));
+        expect(ValidationErrorType.values, contains(ValidationErrorType.startsWithOperator));
+        expect(ValidationErrorType.values, contains(ValidationErrorType.endsWithOperator));
+        expect(ValidationErrorType.values, contains(ValidationErrorType.emptyParentheses));
+        expect(ValidationErrorType.values, contains(ValidationErrorType.operatorAfterOpenParen));
+        expect(ValidationErrorType.values, contains(ValidationErrorType.operatorBeforeCloseParen));
       });
     });
 
@@ -55,24 +115,28 @@ void main() {
         final result = useCase.execute('');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot be empty'));
+        expect(result.type, equals(ValidationErrorType.emptyExpression));
       });
 
       test('returns failure for whitespace-only string', () {
         final result = useCase.execute('   ');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot be empty'));
+        expect(result.type, equals(ValidationErrorType.emptyExpression));
       });
 
       test('returns failure for tab-only string', () {
         final result = useCase.execute('\t\t');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot be empty'));
+        expect(result.type, equals(ValidationErrorType.emptyExpression));
       });
 
       test('returns failure for mixed whitespace string', () {
         final result = useCase.execute(' \t \n ');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot be empty'));
+        expect(result.type, equals(ValidationErrorType.emptyExpression));
       });
     });
 
@@ -81,90 +145,161 @@ void main() {
         final result = useCase.execute('2++3');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects -- as invalid consecutive operators', () {
         final result = useCase.execute('5--2');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects +- as invalid consecutive operators', () {
         final result = useCase.execute('8+-9');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects -+ as invalid consecutive operators', () {
         final result = useCase.execute('4-+2');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects */ as invalid consecutive operators', () {
         final result = useCase.execute('3*/4');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects /* as invalid consecutive operators', () {
         final result = useCase.execute('6/*2');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects *+ as invalid consecutive operators', () {
         final result = useCase.execute('5*+3');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects /- as invalid consecutive operators', () {
         final result = useCase.execute('10/-2');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
+      });
+
+      test('detects ** as invalid consecutive operators', () {
+        final result = useCase.execute('3**4');
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
+      });
+
+      test('detects // as invalid consecutive operators', () {
+        final result = useCase.execute('8//2');
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
+      });
+
+      test('detects /+ as invalid consecutive operators', () {
+        final result = useCase.execute('6/+3');
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
+      });
+
+      test('detects +* as invalid consecutive operators', () {
+        final result = useCase.execute('2+*3');
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
+      });
+
+      test('detects +/ as invalid consecutive operators', () {
+        final result = useCase.execute('2+/3');
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
+      });
+
+      test('detects -* as invalid consecutive operators', () {
+        final result = useCase.execute('2-*3');
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
+      });
+
+      test('detects -/ as invalid consecutive operators', () {
+        final result = useCase.execute('2-/3');
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
+      });
+
+      test('detects *- as invalid consecutive operators', () {
+        final result = useCase.execute('2*-3');
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects ×× as invalid consecutive operators', () {
         final result = useCase.execute('3××4');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects ÷÷ as invalid consecutive operators', () {
         final result = useCase.execute('8÷÷2');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects ^+ as invalid consecutive operators', () {
         final result = useCase.execute('2^+3');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects ^* as invalid consecutive operators', () {
         final result = useCase.execute('2^*3');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects ^^ as invalid consecutive operators', () {
         final result = useCase.execute('2^^3');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects three consecutive operators as invalid', () {
         final result = useCase.execute('2+-*3');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('detects four consecutive operators as invalid', () {
         final result = useCase.execute('5+--*2');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('allows ^- for negative exponents (valid case)', () {
@@ -178,54 +313,63 @@ void main() {
         final result = useCase.execute('(2+3');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Unmatched opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.unmatchedParenthesis));
       });
 
       test('detects missing opening parenthesis', () {
         final result = useCase.execute('2+3)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Unmatched closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.unmatchedParenthesis));
       });
 
       test('detects extra opening parenthesis in nested expression', () {
         final result = useCase.execute('((2+3)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Unmatched opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.unmatchedParenthesis));
       });
 
       test('detects extra closing parenthesis in nested expression', () {
         final result = useCase.execute('(2+3))');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Unmatched closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.unmatchedParenthesis));
       });
 
       test('detects multiple unmatched opening parentheses', () {
         final result = useCase.execute('(((2+3)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Unmatched opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.unmatchedParenthesis));
       });
 
       test('detects multiple unmatched closing parentheses', () {
         final result = useCase.execute('(2+3)))');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Unmatched closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.unmatchedParenthesis));
       });
 
       test('detects closing before opening parenthesis', () {
         final result = useCase.execute(')(2+3)(');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Unmatched closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.unmatchedParenthesis));
       });
 
       test('detects reversed parentheses order', () {
         final result = useCase.execute(')2+3(');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Unmatched closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.unmatchedParenthesis));
       });
 
       test('detects unbalanced in complex expression', () {
         final result = useCase.execute('((2+3)*4+5');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Unmatched opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.unmatchedParenthesis));
       });
 
       test('validates balanced parentheses as valid', () {
@@ -249,36 +393,42 @@ void main() {
         final result = useCase.execute('+5');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot start with an operator'));
+        expect(result.type, equals(ValidationErrorType.startsWithOperator));
       });
 
       test('detects expression starting with *', () {
         final result = useCase.execute('*5');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot start with an operator'));
+        expect(result.type, equals(ValidationErrorType.startsWithOperator));
       });
 
       test('detects expression starting with /', () {
         final result = useCase.execute('/5');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot start with an operator'));
+        expect(result.type, equals(ValidationErrorType.startsWithOperator));
       });
 
       test('detects expression starting with ×', () {
         final result = useCase.execute('×5');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot start with an operator'));
+        expect(result.type, equals(ValidationErrorType.startsWithOperator));
       });
 
       test('detects expression starting with ÷', () {
         final result = useCase.execute('÷5');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot start with an operator'));
+        expect(result.type, equals(ValidationErrorType.startsWithOperator));
       });
 
       test('detects expression starting with ^', () {
         final result = useCase.execute('^5');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot start with an operator'));
+        expect(result.type, equals(ValidationErrorType.startsWithOperator));
       });
 
       test('allows expression starting with - (unary minus)', () {
@@ -297,48 +447,56 @@ void main() {
         final result = useCase.execute('5+');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot end with an operator'));
+        expect(result.type, equals(ValidationErrorType.endsWithOperator));
       });
 
       test('detects expression ending with -', () {
         final result = useCase.execute('5-');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot end with an operator'));
+        expect(result.type, equals(ValidationErrorType.endsWithOperator));
       });
 
       test('detects expression ending with *', () {
         final result = useCase.execute('5*');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot end with an operator'));
+        expect(result.type, equals(ValidationErrorType.endsWithOperator));
       });
 
       test('detects expression ending with /', () {
         final result = useCase.execute('5/');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot end with an operator'));
+        expect(result.type, equals(ValidationErrorType.endsWithOperator));
       });
 
       test('detects expression ending with ×', () {
         final result = useCase.execute('5×');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot end with an operator'));
+        expect(result.type, equals(ValidationErrorType.endsWithOperator));
       });
 
       test('detects expression ending with ÷', () {
         final result = useCase.execute('5÷');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot end with an operator'));
+        expect(result.type, equals(ValidationErrorType.endsWithOperator));
       });
 
       test('detects expression ending with ^', () {
         final result = useCase.execute('5^');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot end with an operator'));
+        expect(result.type, equals(ValidationErrorType.endsWithOperator));
       });
 
       test('detects complex expression ending with operator', () {
         final result = useCase.execute('2+3*4-');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot end with an operator'));
+        expect(result.type, equals(ValidationErrorType.endsWithOperator));
       });
     });
 
@@ -347,36 +505,42 @@ void main() {
         final result = useCase.execute('(+5)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator after opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorAfterOpenParen));
       });
 
       test('detects * after opening parenthesis', () {
         final result = useCase.execute('(*5)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator after opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorAfterOpenParen));
       });
 
       test('detects / after opening parenthesis', () {
         final result = useCase.execute('(/5)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator after opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorAfterOpenParen));
       });
 
       test('detects × after opening parenthesis', () {
         final result = useCase.execute('(×5)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator after opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorAfterOpenParen));
       });
 
       test('detects ÷ after opening parenthesis', () {
         final result = useCase.execute('(÷5)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator after opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorAfterOpenParen));
       });
 
       test('detects ^ after opening parenthesis', () {
         final result = useCase.execute('(^5)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator after opening parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorAfterOpenParen));
       });
 
       test('allows - after opening parenthesis (unary minus)', () {
@@ -395,42 +559,49 @@ void main() {
         final result = useCase.execute('(5+)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator before closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorBeforeCloseParen));
       });
 
       test('detects - before closing parenthesis', () {
         final result = useCase.execute('(5-)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator before closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorBeforeCloseParen));
       });
 
       test('detects * before closing parenthesis', () {
         final result = useCase.execute('(5*)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator before closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorBeforeCloseParen));
       });
 
       test('detects / before closing parenthesis', () {
         final result = useCase.execute('(5/)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator before closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorBeforeCloseParen));
       });
 
       test('detects × before closing parenthesis', () {
         final result = useCase.execute('(5×)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator before closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorBeforeCloseParen));
       });
 
       test('detects ÷ before closing parenthesis', () {
         final result = useCase.execute('(5÷)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator before closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorBeforeCloseParen));
       });
 
       test('detects ^ before closing parenthesis', () {
         final result = useCase.execute('(5^)');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid operator before closing parenthesis'));
+        expect(result.type, equals(ValidationErrorType.operatorBeforeCloseParen));
       });
     });
 
@@ -439,24 +610,28 @@ void main() {
         final result = useCase.execute('()');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Empty parentheses are not allowed'));
+        expect(result.type, equals(ValidationErrorType.emptyParentheses));
       });
 
       test('detects empty parentheses in expression', () {
         final result = useCase.execute('5+()');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Empty parentheses are not allowed'));
+        expect(result.type, equals(ValidationErrorType.emptyParentheses));
       });
 
       test('detects empty parentheses at start of expression', () {
         final result = useCase.execute('()+5');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Empty parentheses are not allowed'));
+        expect(result.type, equals(ValidationErrorType.emptyParentheses));
       });
 
       test('detects empty parentheses in middle of expression', () {
         final result = useCase.execute('2+()*3');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Empty parentheses are not allowed'));
+        expect(result.type, equals(ValidationErrorType.emptyParentheses));
       });
     });
 
@@ -636,6 +811,7 @@ void main() {
         final result = useCase.execute('*2++3');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot start with an operator'));
+        expect(result.type, equals(ValidationErrorType.startsWithOperator));
       });
 
       test('detects first error when multiple errors exist - ends with operator', () {
@@ -643,6 +819,7 @@ void main() {
         final result = useCase.execute('(2+3+');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Expression cannot end with an operator'));
+        expect(result.type, equals(ValidationErrorType.endsWithOperator));
       });
 
       test('detects consecutive operators before parenthesis check', () {
@@ -650,6 +827,7 @@ void main() {
         final result = useCase.execute('2++3(');
         expect(result, isA<ValidationFailure>());
         expect((result as ValidationFailure).message, equals('Invalid consecutive operators'));
+        expect(result.type, equals(ValidationErrorType.consecutiveOperators));
       });
 
       test('only operators returns appropriate error', () {
@@ -657,6 +835,7 @@ void main() {
         expect(result, isA<ValidationFailure>());
         // Starts with + which is invalid start operator
         expect((result as ValidationFailure).message, equals('Expression cannot start with an operator'));
+        expect(result.type, equals(ValidationErrorType.startsWithOperator));
       });
     });
   });

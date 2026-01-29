@@ -145,6 +145,262 @@ void main() {
     });
 
     // =========================================================================
+    // EDGE CASE VERIFICATION TESTS
+    // Explicit tests for edge case behaviors as per task requirements:
+    // 1. Multiple consecutive +/- taps
+    // 2. +/- after operators
+    // 3. Cursor position preservation
+    // =========================================================================
+    group('Edge Case Verification', () {
+      group('edge case: multiple consecutive +/- taps', () {
+        test('multiple consecutive taps on number toggle correctly', () {
+          // Simulates user rapidly tapping +/- button multiple times
+          var expression = Expression('5');
+          
+          // First tap: 5 -> -5
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('-5'));
+          
+          // Second tap: -5 -> 5
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('5'));
+          
+          // Third tap: 5 -> -5
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('-5'));
+          
+          // Fourth tap: -5 -> 5
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('5'));
+          
+          // Fifth tap: 5 -> -5
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('-5'));
+        });
+
+        test('multiple consecutive taps on empty expression insert multiple minuses', () {
+          // When tapping +/- on empty or just "-", per current implementation
+          // each tap inserts a minus character
+          var expression = Expression.empty();
+          
+          // First tap: '' -> '-'
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('-'));
+          expect(expression.cursorPosition, equals(1));
+          
+          // Second tap on just '-': inserts another minus
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('--'));
+          expect(expression.cursorPosition, equals(2));
+          
+          // Third tap: inserts another minus
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('---'));
+          expect(expression.cursorPosition, equals(3));
+        });
+
+        test('multiple taps on expression after operator', () {
+          // Starting with "5+"
+          var expression = Expression('5+');
+          
+          // First tap: 5+ -> 5+-
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('5+-'));
+          
+          // Second tap: 5+- -> 5+--
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('5+--'));
+          
+          // Third tap: 5+-- -> 5+---
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('5+---'));
+        });
+
+        test('rapid toggling on negative number in expression', () {
+          // Starting with "3+-5" (negative 5)
+          var expression = Expression('3+-5');
+          
+          // First tap: removes the minus -> 3+5
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('3+5'));
+          
+          // Second tap: adds minus back -> 3+-5
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('3+-5'));
+          
+          // Third tap: removes minus -> 3+5
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('3+5'));
+        });
+
+        test('six consecutive taps returns to original state', () {
+          final original = Expression('42');
+          var expression = original;
+          
+          // 6 taps should return to original (even number of toggles)
+          for (var i = 0; i < 6; i++) {
+            expression = useCase.execute(expression);
+          }
+          
+          expect(expression.value, equals(original.value));
+        });
+      });
+
+      group('edge case: +/- after operators', () {
+        test('inserts minus after + operator (e.g., "5+" becomes "5+-")', () {
+          final expression = Expression('5+');
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('5+-'));
+          expect(result.cursorPosition, equals(3));
+        });
+
+        test('inserts minus after * operator', () {
+          final expression = Expression('5*');
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('5*-'));
+          expect(result.cursorPosition, equals(3));
+        });
+
+        test('inserts minus after / operator', () {
+          final expression = Expression('5/');
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('5/-'));
+          expect(result.cursorPosition, equals(3));
+        });
+
+        test('inserts minus after × (multiplication symbol)', () {
+          final expression = Expression('10×');
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('10×-'));
+          expect(result.cursorPosition, equals(4));
+        });
+
+        test('inserts minus after ÷ (division symbol)', () {
+          final expression = Expression('10÷');
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('10÷-'));
+          expect(result.cursorPosition, equals(4));
+        });
+
+        test('inserts minus after ^ (power operator)', () {
+          final expression = Expression('2^');
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('2^-'));
+          expect(result.cursorPosition, equals(3));
+        });
+
+        test('inserts minus after - operator (creates double minus)', () {
+          final expression = Expression('5-');
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('5--'));
+          expect(result.cursorPosition, equals(3));
+        });
+
+        test('inserts minus in complex expression after operator', () {
+          // More complex scenario: "(3+2)×"
+          final expression = Expression('(3+2)×');
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('(3+2)×-'));
+          expect(result.cursorPosition, equals(7));
+        });
+      });
+
+      group('edge case: cursor position preservation', () {
+        test('cursor moves forward by 1 when inserting minus', () {
+          // Cursor at position 0 in "5"
+          final expression = Expression('5', 0);
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('-5'));
+          expect(result.cursorPosition, equals(1)); // Moved forward by 1
+        });
+
+        test('cursor moves backward by 1 when removing minus', () {
+          // Cursor at position 2 in "-5"
+          final expression = Expression('-5', 2);
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('5'));
+          expect(result.cursorPosition, equals(1)); // Moved backward by 1
+        });
+
+        test('user can continue typing after minus insertion', () {
+          // Start with empty, press +/-, then add digits
+          var expression = Expression.empty();
+          
+          // Press +/-
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('-'));
+          expect(expression.cursorPosition, equals(1));
+          
+          // Simulate typing '1'
+          expression = Expression(
+            expression.value + '1',
+            expression.cursorPosition + 1,
+          );
+          expect(expression.value, equals('-1'));
+          expect(expression.cursorPosition, equals(2));
+          
+          // Simulate typing '2'
+          expression = Expression(
+            expression.value + '2',
+            expression.cursorPosition + 1,
+          );
+          expect(expression.value, equals('-12'));
+          expect(expression.cursorPosition, equals(3));
+          
+          // Simulate typing '3'
+          expression = Expression(
+            expression.value + '3',
+            expression.cursorPosition + 1,
+          );
+          expect(expression.value, equals('-123'));
+          expect(expression.cursorPosition, equals(4));
+        });
+
+        test('cursor position preserved when toggling in middle of expression', () {
+          // Expression "5+3" with cursor on "5" (position 1)
+          final expression = Expression('5+3', 1);
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('-5+3'));
+          expect(result.cursorPosition, equals(2)); // Cursor moved forward
+        });
+
+        test('cursor tracks correctly through multiple operations', () {
+          var expression = Expression('10+20', 2); // Cursor after "10"
+          
+          // Negate first operand
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('-10+20'));
+          expect(expression.cursorPosition, equals(3)); // Moved forward
+          
+          // Move cursor to second operand and negate
+          expression = Expression(expression.value, 6); // Cursor at end
+          expression = useCase.execute(expression);
+          expect(expression.value, equals('-10+-20'));
+          expect(expression.cursorPosition, equals(7));
+        });
+
+        test('cursor stays at end of expression after operator + minus', () {
+          final expression = Expression('5+', 2);
+          final result = useCase.execute(expression);
+          
+          expect(result.value, equals('5+-'));
+          expect(result.cursorPosition, equals(3)); // At end, ready for input
+        });
+      });
+    });
+
+    // =========================================================================
     // EDGE CASE TESTS FOR CURSOR POSITION
     // Additional tests for various cursor positions when pressing +/-
     // =========================================================================
