@@ -7,7 +7,34 @@ import 'package:flutter/material.dart';
 class CalculatorColors {
   CalculatorColors._();
 
-  // ==================== Button Colors ====================
+  // ==================== Numeric Button Colors ====================
+
+  /// Background color for numeric buttons (#333333).
+  ///
+  /// A dark gray color used for number buttons (0-9) and decimal point,
+  /// providing good contrast with white text.
+  static const Color numericButtonBackground = Color(0xFF333333);
+
+  /// Pressed state background color for numeric buttons (#4D4D4D).
+  ///
+  /// A lighter gray color that provides visual feedback when
+  /// numeric buttons are pressed.
+  static const Color numericButtonBackgroundPressed = Color(0xFF4D4D4D);
+
+  // ==================== Function Button Colors ====================
+
+  /// Background color for function buttons (#505050).
+  ///
+  /// A gray color used for function buttons (parenthesis, power, clear,
+  /// negate, backspace) that provides visual distinction while maintaining
+  /// good contrast with white text.
+  static const Color functionButtonBackground = Color(0xFF505050);
+
+  /// Pressed state background color for function buttons (#6A6A6A).
+  ///
+  /// A lighter gray color that provides visual feedback when
+  /// function buttons are pressed.
+  static const Color functionButtonBackgroundPressed = Color(0xFF6A6A6A);
 
   /// Background color for the parenthesis button (#505050).
   ///
@@ -39,6 +66,8 @@ class CalculatorColors {
   /// button while maintaining good contrast with white text.
   static const Color negateButtonBackground = Color(0xFF505050);
 
+  // ==================== Operator Button Colors ====================
+
   /// Background color for operator buttons (#FF9500).
   ///
   /// An orange color used for operator buttons (+, -, ×, ÷) and the
@@ -46,11 +75,19 @@ class CalculatorColors {
   /// with white text.
   static const Color operatorButtonBackground = Color(0xFFFF9500);
 
+  /// Pressed state background color for operator buttons (#FFB340).
+  ///
+  /// A lighter orange color that provides visual feedback when
+  /// operator buttons are pressed.
+  static const Color operatorButtonBackgroundPressed = Color(0xFFFFB340);
+
   /// Background color for the equals button (#FF9500).
   ///
   /// Uses the same orange color as other operator buttons for
   /// visual consistency across the calculator UI.
   static const Color equalsButtonBackground = Color(0xFFFF9500);
+
+  // ==================== Button Text Colors ====================
 
   /// Text color for buttons with dark backgrounds.
   ///
